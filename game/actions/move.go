@@ -209,6 +209,31 @@ func (a *Move) AiMoveToPos(ent *game.Entity, dst []int, max_ap int) game.ActionE
   return &exec
 }
 
+func (a *Move) drawPath(ent *game.Entity, g *game.Game, graph algorithm.Graph, src int) {
+  if path_tex != nil {
+    pix := path_tex.Pix()
+    for i := range pix {
+      for j := range pix[i] {
+        pix[i][j] = 0
+      }
+    }
+    current := 0.0
+    for i := 1; i < len(a.path); i++ {
+      src := g.ToVertex(a.path[i-1][0], a.path[i-1][1])
+      dst := g.ToVertex(a.path[i][0], a.path[i][1])
+      v, cost := graph.Adjacent(src)
+      for j := range v {
+        if v[j] == dst {
+          current += cost[j]
+          break
+        }
+      }
+      pix[a.path[i][1]][a.path[i][0]] += byte(current)
+    }
+    path_tex.Remap()
+  }
+}
+
 func (a *Move) findPath(ent *game.Entity, x, y int) {
   g := ent.Game()
   dst := g.ToVertex(x, y)
@@ -226,29 +251,7 @@ func (a *Move) findPath(ent *game.Entity, x, y int) {
       return [2]int{int(x), int(y)}
     }).([][2]int)
     a.cost = int(cost)
-
-    if path_tex != nil {
-      pix := path_tex.Pix()
-      for i := range pix {
-        for j := range pix[i] {
-          pix[i][j] = 0
-        }
-      }
-      current := 0.0
-      for i := 1; i < len(a.path); i++ {
-        src := g.ToVertex(a.path[i-1][0], a.path[i-1][1])
-        dst := g.ToVertex(a.path[i][0], a.path[i][1])
-        v, cost := graph.Adjacent(src)
-        for j := range v {
-          if v[j] == dst {
-            current += cost[j]
-            break
-          }
-        }
-        pix[a.path[i][1]][a.path[i][0]] += byte(current)
-      }
-      path_tex.Remap()
-    }
+    a.drawPath(ent, g, graph, src)
   }
 }
 
@@ -338,6 +341,9 @@ func (a *Move) Maintain(dt int64, g *game.Game, ae game.ActionExec) game.Mainten
     })
     base.Log().Printf("Path Validated: %v", exec)
     a.ent.Stats.ApplyDamage(-a.cost, 0, status.Unspecified)
+    src := g.ToVertex(a.ent.Pos())
+    graph := g.Graph(a.ent.Side(), true, nil)
+    a.drawPath(a.ent, g, graph, src)
   }
   // Do stuff
   factor := float32(math.Pow(2, a.ent.Walking_speed))
