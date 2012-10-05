@@ -1,17 +1,17 @@
-function IsStoryMode()
-  return true
+function setLosModeToRoomsWithSpawnsMatching(side, pattern)
+  sp = Script.GetSpawnPointsMatching(pattern)
+  rooms = {}
+  for i, spawn in pairs(sp) do
+    rooms[i] = Script.RoomAtPos(spawn.Pos)
+  end
+  Script.SetLosMode(side, rooms)
 end
 
-function DoTutorials()
-  --We should totally do some tutorials here.
-  --It would be super cool.
-end
 
 function Init(data)
   side_choices = Script.ChooserFromFile("ui/start/versus/side.json")
 
-  -- check data.map == "random" or something else
-  Script.LoadHouse("Lvl_08_Nursery")
+  Script.LoadHouse("Lvl_10_Manse_Macabre")
 
   store.side = side_choices[1]
   if store.side == "Humans" then
@@ -33,40 +33,51 @@ function Init(data)
   --spawn denizens
   Script.SetVisibility("denizens")
 
-  spawn = Script.GetSpawnPointsMatching("Child_Start")
-  ent = Script.SpawnEntitySomewhereInSpawnPoints("Chaos Child", spawn, false)
-  filename = "ch08/" .. "Chaos Child" .. ".lua"
-  Script.BindAi(ent, filename)
-  store.MasterName = "Chaos Child"  --littler weird, since he's not actually a master.  But he's the one we care about.
-  ServitorEnts = {} 
-  ServitorEnts[1] = "Care Provider"
-  ServitorEnts[2] = "Tutor"
-  ServitorEnts[3] = "Foster Father"
-  
 
-  store.execs = {} 
-  for index = 1, 6, 1 do
-    SpawnNearChild(RandomServitor())
-  end
-  SpawnNearChild(ServitorEnts[3])  --spawn a big daddy
-
-  --spawn intruders
-  if IsStoryMode() then
-    intruder_names = {"Detective", "Occultist", "Ghost Hunter"}
-    intruder_spawn = Script.GetSpawnPointsMatching("Intruders_Start")
-  end 
-
-  for _, name in pairs(intruder_names) do
-    ent = Script.SpawnEntitySomewhereInSpawnPoints(name, intruder_spawn, false)
-    Script.SetGear(ent, "Pylons")
-  end
 
   Script.SaveStore()
+  Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Opening_Denizens.json")
+  ents = {
+    {"Bosch", 1},
+    {"Golem", 1},
+  }
+  Script.SetVisibility("denizens")
+  setLosModeToRoomsWithSpawnsMatching("denizens", "Master_.*")
+  Script.FocusPos(Script.GetSpawnPointsMatching("Master_.*")[1].Pos)
+  placed = Script.PlaceEntities("Master_.*", ents, 1, 1)
+  if placed[1].Name == "Golem" then
+    store.MasterName = "Golem"
+    ServitorEnts = {
+      {"Corpse", 1},
+      {"Eidolon", 2},
+    }
+  end
+  if placed[1].Name == "Bosch" then
+    store.MasterName = "Bosch"
+    ServitorEnts = {
+      {"Angry Shade", 1},
+      {"Lost Soul", 1},
+    }  
+  end
 
-  Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Opening_Denizens.json")
+  setLosModeToRoomsWithSpawnsMatching("denizens", "Servitors_.*")
+  Script.PlaceEntities("Servitors_Start", ServitorEnts, 0, 10)
+print("poo")
   Script.FocusPos(MasterEnt().Pos)   
-  SelectNewOpPoint()
-  store.execs = {} 
+  store.execs = {}
+print("poo2")
+  store.OpPoints = {}
+  i = 1
+  for _, spawn in pairs(Script.GetSpawnPointsMatching("Cleanse_Point")) do
+    print("poo3")
+    Script.SetWaypoint("Cleanse" .. i, "intruders", spawn.Pos, 3)
+    Script.SetWaypoint("CleanseDeni" .. i, "denizens", spawn.Pos, 3)
+    store.OpPoints[i] = spawn.Pos
+    i = i + 1
+  end
+print("poo4")
+  store.OpGoal = 10
+  store.OpCurrent = 0
 end
 
 function RoundStart(intruders, round)
@@ -74,9 +85,18 @@ function RoundStart(intruders, round)
     store.execs = {}
   end
 
-  if not intruders then
-    MawTrigger()
-    MawAttack()
+  if round == 1 and intruders then
+    --intruder have to do their own setup here.
+    ents = {
+      {"Collector", 2},
+      {"Detective", 2},
+      {"Occultist", 2},
+      {"Teen", 2},
+    }
+    
+    Script.SetVisibility("intruders")
+    setLosModeToRoomsWithSpawnsMatching("intruders", "Intruder.*")
+    placed = Script.PlaceEntities("Intruder.*", ents, 1, 6)
   end
 
   store.game = Script.SaveGameState()
@@ -132,69 +152,18 @@ function OnAction(intruders, round, exec)
     store.execs = {}
   end
   store.execs[table.getn(store.execs) + 1] = exec
-
-  --put a waypoint around the kid to show his escort
-  if exec.Ent.Name == store.MasterName then
-    StoreWaypoint("Kid", "intruders", MasterEnt().Pos, 1, false)
-    StoreWaypoint("Kid2", "denizens", MasterEnt().Pos, 1, false)
-  end
-
-  --has the kid reached an op point?
-  if exec.Ent.Name == store.MasterName then
-    if GetDistanceBetweenEnts(exec.Ent, GetEntWithName("Toy")) <= 3 then
-      --kid's gonna flip out!
-      choice = Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Waypoint_Choice_Denizens.json")
-      if choice[1] == "Reinforce" then
-        for index = 1, 4, 1 do        
-          SpawnNearChild(RandomServitor())
-          store.bReinforce = true
-        end 
-      end
-      if choice[1] == "Maws" then
-        for i = 1, 3, 1 do       
-          SpawnRandomMaw()
-          store.bMaws = true
-        end
-      end
-      if choice[1] == "Turrets" then
-        for i = 1, 4, 1 do        
-          KillTurret()
-          store.bTurrets = true
-        end
-      end
-
-      SelectNewOpPoint()
-    end
-  end
-
-  --are the intruders trying to win?
-  if exec.Ent.Side.Intruder then
-    if GetDistanceBetweenEnts(exec.Ent, MasterEnt()) <= 2 then
-      --Is the kid vulnerable
-      if not DeniEntNearKid() then
-        --they did it.
-        Script.Sleep(2)
-        Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Victory_Intruders.json")   
-      end
-    end
-  end
-
-  --warn the denizens if there aren't any near the kid.
-  if not store.WarnedDenizensAboutVulnerableKid then
-    if exec.Ent.Side.Denizen then
-      if not DeniEntNearKid() then
-        store.WarnedDenizensAboutVulnerableKid = true
-        --!!!!!!!Dialogue to warn the denizens
-      end
-    end
-  end
-
-
-  if not AnyIntrudersAlive() then
-    --game over, the denizens win.
+  
+  if not AnyIntrudersAlive() and store.bIntruderIntroDone then
     Script.Sleep(2)
-    Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Victory_Denizens.json")
+    Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Denizens.json")
   end
+
+  --so does killing all the denizens
+  if not AnyDenizensAlive() then
+    Script.Sleep(2)
+    Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Intruders.json")
+  end  
+
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them
   if exec.Ent.ApCur == 0 then
@@ -223,32 +192,40 @@ function RoundEnd(intruders, round)
     end
 
     if intruders then
-      Script.DialogBox("ui/dialog/Lvl08/pass_to_denizens.json")
+      Script.DialogBox("ui/dialog/Lvl10/pass_to_denizens.json")
+      Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Denizens.json", {points=store.occupiedPoints, countdown=(store.OpGoal - store.OpCurrent)})
     else
       if not bIntruderIntroDone then
         bIntruderIntroDone = true
-        Script.DialogBox("ui/dialog/Lvl08/pass_to_intruders.json")
-        Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Opening_Intruders.json")
+        Script.DialogBox("ui/dialog/Lvl10/pass_to_intruders.json")
+        Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Opening_Intruders.json")
         bSkipOtherChecks = true
       end
 
       if not bSkipOtherChecks then  --if we haven't showed any of the other start messages, use the generic pass.
-        Script.DialogBox("ui/dialog/Lvl08/pass_to_intruders.json")
-      end
+        Script.DialogBox("ui/dialog/Lvl10/pass_to_intruders.json")
+      end          
+    end
 
-      if store.bReinforce then
-        Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Choice_Reinforce_Intruders.json")
-        store.bReinforce = false
+    if not intruders then
+      --at start of intruder turn, push the score by the number of occupied op points.
+      store.occupiedPoints = 0
+      for i = 1, 3, 1 do
+        for _, ent in pairs(Script.GetAllEnts()) do
+          if ent.Side.Intruder then
+            if GetDistanceBetweenPoints(store.OpPoints[i], ent.Pos) <= 3 then
+              store.occupiedPoints = store.occupiedPoints + 1
+              break
+            end
+          end
+        end
       end
-      if store.bMaws then
-        Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Choice_Maws_Intruders.json")
-        store.bMaws = false
+      store.OpCurrent = store.OpCurrent + store.occupiedPoints
+      if store.OpCurrent >= store.OpGoal then
+        Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Intruders.json")
+      else 
+        Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Intruders.json", {points=store.occupiedPoints, countdown=(store.OpGoal - store.OpCurrent)})
       end
-      if store.bTurrets then
-        Script.DialogBox("ui/dialog/Lvl08/Lvl_08_Choice_Turrets_Intruders.json")
-        store.bTurrets = false
-      end            
-
     end
 
     Script.SetLosMode("intruders", "entities")
@@ -297,9 +274,9 @@ function RoundEnd(intruders, round)
   end
 end
 
-function MasterEnt()
+function DeviceEnt()
   for _, ent in pairs(Script.GetAllEnts()) do
-    if ent.Name == store.MasterName then
+    if ent.Name == store.DeviceName then
       return ent
     end
   end
@@ -314,15 +291,13 @@ function AnyIntrudersAlive()
   return false  
 end
 
-function DeniEntNearKid()
-  master = MasterEnt()
+function AnyDenizensAlive()
   for _, ent in pairs(Script.GetAllEnts()) do
-    if ent.Side.Denizen and ent.Name ~= store.MasterName then
-      if GetDistanceBetweenEnts(ent, MasterEnt()) <= 5 then
-        return true
-      end
+    if ent.Side.Denizen and ent.HpCur > 0 then
+      return true
     end
   end
+  return false  
 end
 
 function pointIsInSpawn(pos, sp)
@@ -428,62 +403,6 @@ function doSetPos(setPosExec)
   Script.SetPosition(setPosExec.entity, setPosExec.newPos)
 end
 
-
-function SpawnNearChild(sNameOfThingToSpawn)
-  childEnt = MasterEnt()
-
-  i = 1
-  while i <= 1 do
-    --Summon a new minion
-    omgCounter = 1
-    nRandomNumberOfAwesomenoess = Script.Rand(200)
-    nRandomCounter = 1
-    for _, PossibleSpawn in pairs(Script.GetLos(childEnt)) do
-      if nRandomCounter == nRandomNumberOfAwesomenoess then
-        ent = StoreSpawn(sNameOfThingToSpawn, PossibleSpawn) 
-        if ent then  --we succeeded at spawning a dude
-          --Script.SetAp(ent, 0)
-          i = i + 1
-          break
-        end
-      else
-        nRandomCounter = nRandomCounter + 1
-      end
-    end
-    omgCounter = omgCounter + 1
-    if omgCounter >= 200 then
-      break
-    end
-  end
-end
-
-function RandomServitor()
-  if Script.Rand(4) > 2 then
-    return ServitorEnts[1]
-  else
-    return ServitorEnts[2]
-  end
-end
-
-function SelectNewOpPoint()
-  ent = GetEntWithName("Toy")
-  if ent then
-    startPos = ent.Pos
-  else
-    spawn = Script.GetSpawnPointsMatching("Toy_Start")[1]
-    ent = StoreSpawn("Toy", spawn.Pos)
-    startPos = spawn.Pos
-  end
-  newPos = startPos
-
-  while newPos.X == startPos.X and newPos.Y == startPos.Y do
-    spawns = Script.GetSpawnPointsMatching("Op_Point")
-    newPos = spawns[Script.Rand(table.getn(spawns))].Pos
-    StoreSetPos(ent, newPos)
-    StoreWaypoint("OpPoint", "denizens", newPos, 1, false)
-  end
-end
-
 function GetEntWithName(name)
   for _, ent in pairs(Script.GetAllEnts()) do
     if ent.Name == name then
@@ -492,54 +411,49 @@ function GetEntWithName(name)
   end
 end
 
-function MawTrigger()
-  for _, spawn in pairs(Script.GetSpawnPointsMatching("Maw_Spawn")) do
-    --if this spawn is near 3 intruder entities, we're mawing it up.
-    intruderCount = 0
-    for _, ent in pairs(Script.GetAllEnts()) do
-      if ent.Side.Intruder then
-        if GetDistanceBetweenPoints(ent.Pos, spawn.Pos) <= 7 then
-          intruderCount = intruderCount + 1
-        end
-      end
-    end
-
-    if intruderCount >= 3 then  --flip out
-      StoreSpawn("Maelstrom", spawn.Pos)
-    end
-  end
-end
-
-function MawAttack()
-  for _, mawEnt in pairs(Script.GetAllEnts()) do
-    if mawEnt.Name == "Maelstrom" then
-      for _, ent in pairs(Script.GetAllEnts()) do
-        if ent.Side.Intruder then
-          if GetDistanceBetweenEnts(mawEnt, ent) <= 7 then
-            StoreDamage(ent, 4)
-          end
-        end
-      end
-    end
-  end
-end
-
-function SpawnRandomMaw()
-  i = 1
-  while i <= 1 do
-    --Summon a new minion
-    MawSpawns = Script.GetSpawnPointsMatching("Maw_Spawn")
-    ent = StoreSpawn("Maelstrom", MawSpawns[Script.Rand(table.getn(MawSpawns))].Pos)
-    if ent then --succeeded.  We can bail.
-      i = i + 1
-    end
-  end
-end
-
-function KillTurret()
+function DeviceAoe()
+  device = DeviceEnt()
   for _, ent in pairs(Script.GetAllEnts()) do
-    if ent.Name == "Pylon" then
-      StoreDespawn(ent)
+    if GetDistanceBetweenEnts(ent, device) <= 6 then
+      if ent.Name == store.DeviceName then
+        StoreDamage(ent, 50)
+      else
+        StoreDamage(ent, 4)
+      end
+    end
+  end
+end
+
+function IsBaneNearIntruder(baneEnt)
+  for _, ent in pairs(Script.GetAllEnts()) do
+    if ent.Side.Intruder then
+      if GetDistanceBetweenEnts(baneEnt, ent) <= 1 then
+        return true
+      end
+    end
+  end
+end
+
+function BaneAoe(baneEnt)
+  for _, ent in pairs(Script.GetAllEnts()) do
+    if GetDistanceBetweenEnts(ent, baneEnt) <= 4 then
+      StoreDamage(ent, 4)
+    end
+  end
+end
+
+function GetEntAtPos(pos)
+  for _, ent in pairs(Script.GetAllEnts()) do
+    if ent.Pos.X == pos.X and ent.Pos.Y == pos.Y then
+      return ent 
+    end
+  end
+end
+
+function MasterEnt()
+  for _, ent in pairs(Script.GetAllEnts()) do
+    if ent.Name == store.MasterName then
+      return ent
     end
   end
 end

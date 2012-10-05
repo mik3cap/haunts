@@ -281,6 +281,7 @@ function OnAction(intruders, round, exec)
       if pointIsInSpawns(exec.Ent.Pos, "Escape") then
         if exec.Ent.Conditions["Carrying Antidote"] then
           --The intruders got to the exit with the Antidote.  Game over.
+          Script.Sleep(2)
           Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Victory_Intruders.json")    
         end
       end
@@ -298,6 +299,7 @@ function OnAction(intruders, round, exec)
 
   --deni's win when all intruders dead.
   if not AnyIntrudersAlive() then
+    Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Victory_Denizens.json")
   end 
 
@@ -321,12 +323,15 @@ function OnAction(intruders, round, exec)
   end 
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them
-  -- if exec.Ent.ApCur == 0 then
-  --   nextEnt = GetEntityWithMostAP(exec.Ent.Side)
-  --   if nextEnt.ApCur > 0 then
-  --     Script.SelectEnt(nextEnt)
-  --   end
-  -- end
+  if exec.Ent.ApCur == 0 then
+    nextEnt = GetEntityWithMostAP(exec.Ent.Side)
+    if nextEnt.ApCur > 0 then
+      if exec.Action.Type ~= "Move" then
+        Script.Sleep(2)
+      end      
+      Script.SelectEnt(nextEnt)
+    end
+  end
 end
  
 
