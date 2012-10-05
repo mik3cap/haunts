@@ -62,9 +62,6 @@ function Init(data)
     Script.SpawnEntitySomewhereInSpawnPoints("Patient", patient_spawn, false)
   end 
 
-  --we will incorporate some randomness here.
-  math.randomseed(os.time())
-
   --set these modular variables.
   store.nIntrudersFound = 0
   store.nMonstersFound = 0
@@ -163,7 +160,7 @@ function RoundStart(intruders, round)
     if ValueForReinforce() > 1 then
       for i = 1,  math.floor((ValueForReinforce()/2) + .5) , 1 do
         --Pick an entity
-        if math.random(4) > 2 then
+        if Script.Rand(4) > 2 then
           floodEnt = ServitorEnts[1][1]
         else
           floodEnt = ServitorEnts[2][1]
@@ -350,47 +347,49 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
+    next_store = {}
     if intruders then
       Script.DialogBox("ui/dialog/Lvl03/pass_to_denizens.json")
 
       if store.bFloodStarted and not store.bToldDenizensAboutFloodStart then
         --if we haven't told the denizens about flood start then the intruders must have
         --got to the waypoint.  Tell deni's about both the waypoint and the alarm.
-        store.bToldDenizensAboutFloodStart = true
+        next_store.bToldDenizensAboutFloodStart = true
         Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Intruders_Got_To_Waypoint_Denizens.json")
         Script.SetMusicParam("tension_level", 0.7)
       end 
     else
       Script.DialogBox("ui/dialog/Lvl03/pass_to_intruders.json")
       if not store.bDoneIntruderIntro then
-        store.bDoneIntruderIntro = true
+        next_store.bDoneIntruderIntro = true
         Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Opening_Intruders.json")
       end
 
       if bIntrudersSpotted and not store.bTalkedAboutIntruderSpot then
         --The master saw an intruder last turn. Need to let the truds know that the
         --master can now set off the alarm.
-        store.bTalkedAboutIntruderSpot = true
+        next_store.bTalkedAboutIntruderSpot = true
         Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Identified_Escapees_Intruders.json")
       end
 
       if store.bFloodStarted and not store.bToldIntrudersAboutAlarm then
         --If the intruders don't know about the alarm, then the master triggered it this turn.
         --Tell the intruders that the alarm has sounded.
-        store.bToldIntrudersAboutAlarm =  true
+        next_store.bToldIntrudersAboutAlarm =  true
         Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Alarm_Started_Intruders.json")
       end
     end
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
+    execs = store.execs
     Script.LoadGameState(store.game)
 
     --focus the camera on somebody on each team.
     side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
     Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-    for _, exec in pairs(store.execs) do
+    for _, exec in pairs(execs) do
       bDone = false
       if exec.script_spawn then
         doSpawn(exec)
@@ -423,6 +422,9 @@ function RoundEnd(intruders, round)
           LastDenizenEnt = exec.Ent
         end 
       end
+    end
+    for key, value in pairs(next_store) do
+      store[key] = value
     end
     store.execs = {}
   end
@@ -562,7 +564,7 @@ function SpawnIntruderOrMonster(entToKillAndReplace)
       Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder1.json")
     end
   else
-    if (math.random(1, 5) > 2 and store.nIntrudersFound <= 3) then
+    if (Script.Rand(5) > 2 and store.nIntrudersFound <= 3) then
       --Spawn intruder
       store.nIntrudersFound = store.nIntrudersFound + 1
       if store.nIntrudersFound == 2 then
