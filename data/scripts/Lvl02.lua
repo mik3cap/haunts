@@ -115,12 +115,13 @@ function RoundStart(intruders, round)
     end
   end  
 
+  Script.SetLosMode("intruders", "entities")
+  Script.SetLosMode("denizens", "entities")
+
   store.game = Script.SaveGameState()
   side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}
   SelectCharAtTurnStart(side)
   if Side() == "Humans" then
-    Script.SetLosMode("intruders", "entities")
-    Script.SetLosMode("denizens", "entities")
     if intruders then
       Script.SetVisibility("intruders")
     else
