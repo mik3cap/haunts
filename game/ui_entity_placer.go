@@ -1,16 +1,17 @@
 package game
 
 import (
-  "fmt"
-  "path/filepath"
   "errors"
+  "fmt"
+  gl "github.com/chsc/gogl/gl21"
+  "github.com/runningwild/glop/gin"
+  "github.com/runningwild/glop/gui"
+  "github.com/runningwild/glop/util/algorithm"
   "github.com/runningwild/haunts/base"
   "github.com/runningwild/haunts/house"
+  "github.com/runningwild/haunts/sound"
   "github.com/runningwild/haunts/texture"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/util/algorithm"
-  gl "github.com/chsc/gogl/gl21"
+  "path/filepath"
 )
 
 type placerLayout struct {
@@ -214,6 +215,7 @@ func (ep *EntityPlacer) Respond(g *gui.Gui, group gui.EventGroup) bool {
       cost := ep.roster[ent.Name]
       ep.points -= cost
       ep.ents = append(ep.ents, ent)
+      sound.PlaySound("Haunts/SFX/UI/Place")
       if cost <= ep.points {
         ep.game.new_ent = MakeEntity(ent.Name, ep.game)
         ep.game.viewer.AddDrawable(ep.game.new_ent)

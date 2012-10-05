@@ -4,6 +4,7 @@ import (
   "github.com/runningwild/glop/gin"
   "github.com/runningwild/glop/gui"
   "github.com/runningwild/haunts/base"
+  "github.com/runningwild/haunts/sound"
   "github.com/runningwild/haunts/texture"
   "github.com/runningwild/opengl/gl"
 )
@@ -23,6 +24,9 @@ type Button struct {
     Size          int
     Justification string
   }
+
+  // True if the mouse was over this button on the last frame
+  was_in bool
 
   // Color - brighter when the mouse is over it
   shade float64
@@ -49,6 +53,7 @@ func (b *Button) handleClick(x, y int, data interface{}) bool {
   in := pointInsideRect(x, y, b.bounds.x, b.bounds.y, b.bounds.dx, b.bounds.dy)
   if in && b.valid {
     b.f(data)
+    sound.PlaySound("Haunts/SFX/UI/Select")
   }
   return in
 }
@@ -89,6 +94,10 @@ func (b *Button) Think(x, y, mx, my int, dt int64) {
     b.valid = true
   }
   in := b.valid && pointInsideRect(mx, my, b.bounds.x, b.bounds.y, b.bounds.dx, b.bounds.dy)
+  if in && !b.was_in {
+    sound.PlaySound("Haunts/SFX/UI/Tick")
+  }
+  b.was_in = in
   b.shade = doShading(b.shade, in, dt)
 }
 

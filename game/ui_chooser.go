@@ -7,6 +7,7 @@ import (
   "github.com/runningwild/glop/gui"
   "github.com/runningwild/glop/util/algorithm"
   "github.com/runningwild/haunts/base"
+  "github.com/runningwild/haunts/sound"
   "github.com/runningwild/haunts/texture"
   "math"
   "path/filepath"
@@ -141,12 +142,14 @@ type chooseLayout struct {
 }
 
 type OptionBasic struct {
-  Id    string
-  Small texture.Object
-  Large texture.Object
-  Text  string
-  Size  int
-  alpha byte
+  Id           string
+  Small        texture.Object
+  Large        texture.Object
+  Text         string
+  Size         int
+  alpha        byte
+  was_over     bool
+  was_selected bool
 }
 
 func (ob *OptionBasic) String() string {
@@ -168,6 +171,14 @@ func (ob *OptionBasic) Height() int {
   return ob.Small.Data().Dy()
 }
 func (ob *OptionBasic) Think(hovered, selected, selectable bool, dt int64) {
+  if selectable && hovered && !ob.was_over {
+    sound.PlaySound("Haunts/SFX/UI/Tick")
+  }
+  ob.was_over = hovered
+  if ob.was_selected != selected {
+    sound.PlaySound("Haunts/SFX/UI/Select")
+  }
+  ob.was_selected = selected
   switch {
   case selected:
     ob.alpha = 255
