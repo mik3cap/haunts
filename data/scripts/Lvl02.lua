@@ -118,7 +118,7 @@ function RoundStart(intruders, round)
   store.game = Script.SaveGameState()
   side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}
   SelectCharAtTurnStart(side)
-  if store.side == "Humans" then
+  if Side() == "Humans" then
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
     if intruders then
@@ -128,7 +128,7 @@ function RoundStart(intruders, round)
     end
     Script.ShowMainBar(true)
   else
-    Script.ShowMainBar(intruders == (store.side == "Intruders"))
+    Script.ShowMainBar(intruders == (Side() == "Intruders"))
   end
 
   if Net.Active() then
@@ -277,7 +277,7 @@ function RoundEnd(intruders, round)
 
   bSkipOtherChecks = false  --Resets this every round
 
-  if store.side == "Humans" then
+  if Side() == "Humans" then
     Script.ShowMainBar(false)
     Script.SetLosMode("intruders", "blind")
     Script.SetLosMode("denizens", "blind")
