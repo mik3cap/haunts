@@ -174,6 +174,7 @@ function RoundStart(intruders, round)
     end
 
     Script.EndPlayerInteraction()
+    store.game = nil
     store.game = Script.SaveGameState()
     if Net.Active() then
       Net.UpdateState(store.game)
@@ -237,6 +238,7 @@ function RoundStart(intruders, round)
   -- We run the *OnRound() functions here so that they can modify data in the
   -- store and still have it saved to the game state that we upload to the
   -- server.
+  store.game = nil
   if Net.Active() then
     store.game = Script.SaveGameState()
     print("Update State Round/Intruders: ", round, intruders)

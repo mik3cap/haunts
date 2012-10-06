@@ -118,6 +118,7 @@ function RoundStart(intruders, round)
   Script.SetLosMode("intruders", "entities")
   Script.SetLosMode("denizens", "entities")
 
+  store.game = nil
   store.game = Script.SaveGameState()
   side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}
   SelectCharAtTurnStart(side)
@@ -132,6 +133,7 @@ function RoundStart(intruders, round)
     Script.ShowMainBar(intruders == (Side() == "Intruders"))
   end
 
+  store.game = nil
   if Net.Active() then
     store.game = Script.SaveGameState()
     print("Update State Round/Intruders: ", round, intruders)
@@ -179,7 +181,7 @@ function OnAction(intruders, round, exec)
   store.execs[table.getn(store.execs) + 1] = exec
 
   if exec.Action.Type == "Basic Attack" then
-    if exec.Target.Name == store.MasterName and exec.Target.Hp <= 0 then
+    if exec.Target.Name == store.MasterName and exec.Target.HpCur <= 0 then
       --master is dead.  Intruders win.
       Script.Sleep(2)
       Script.DialogBox("ui/dialog/Lvl02/Lvl_02_Victory_Intruders.json")
