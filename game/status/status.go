@@ -11,11 +11,18 @@ import (
 type Kind string
 
 const (
+  Kind_AP     Kind = "AP"
+  Kind_Attack Kind = "Attack"
+  Kind_Corpus Kind = "Corpus"
+  Kind_Ego    Kind = "Ego"
+  Kind_Sight  Kind = "Sight"
+  Kind_HP     Kind = "HP"
+
   Panic       Kind = "Panic"
   Terror      Kind = "Terror"
   Fire        Kind = "Fire"
-  Poison      Kind = "Poison"
   Brutal      Kind = "Brutal"
+  Poison      Kind = "Poison"
   Unspecified Kind = "Unspecified"
 )
 
@@ -31,6 +38,16 @@ func (k Kind) Primary() Primary {
   case Panic:
     fallthrough
   case Terror:
+    fallthrough
+  case Kind_AP:
+    fallthrough
+  case Kind_Attack:
+    fallthrough
+  case Kind_Corpus:
+    fallthrough
+  case Kind_Ego:
+    fallthrough
+  case Kind_Sight:
     return Ego
 
   case Fire:
@@ -38,6 +55,10 @@ func (k Kind) Primary() Primary {
   case Brutal:
     fallthrough
   case Poison:
+    fallthrough
+  case Unspecified:
+    fallthrough
+  case Kind_HP:
     return Corpus
   }
   panic("Unknown status.Kind")
