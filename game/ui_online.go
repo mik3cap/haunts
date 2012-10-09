@@ -4,12 +4,12 @@ import (
   "fmt"
   "github.com/runningwild/glop/gin"
   "github.com/runningwild/glop/gui"
+  "github.com/runningwild/glop/util/algorithm"
   "github.com/runningwild/haunts/base"
   "github.com/runningwild/haunts/mrgnet"
   "github.com/runningwild/haunts/texture"
   "github.com/runningwild/opengl/gl"
   "path/filepath"
-  "sort"
   "time"
 )
 
@@ -17,9 +17,20 @@ type gameListBox struct {
   Up     Button
   Down   Button
   Scroll ScrollingRegion
+  Title  struct {
+    Text string
+    Size int
+  }
+
   update chan mrgnet.ListGamesResponse
   time   time.Time
-  games  []ButtonLike
+  games  []gameField
+}
+
+type gameField struct {
+  join, delete ButtonLike
+  name         string
+  key          mrgnet.GameKey
 }
 
 type onlineLayout struct {
@@ -115,7 +126,7 @@ func InsertOnlineMenu(ui gui.WidgetParent) error {
       }()
       select {
       case <-done:
-      case <-time.After(10 * time.Second):
+      case <-time.After(5 * time.Second):
         resp.Err = "Couldn't connect to server."
       }
       <-sm.control.in
@@ -235,20 +246,23 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
 
   var net_id mrgnet.NetId
   fmt.Sscanf(base.GetStoreVal("netid"), "%d", &net_id)
-  for _, glb := range []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted} {
+  for i := range []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted} {
+    glb := []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted}[i]
     select {
     case list := <-glb.update:
       glb.games = glb.games[0:0]
-      for i := range list.Games {
+      for j := range list.Games {
         var b Button
-        base.Log().Printf("Adding button: %s", list.Games[i].Name)
+        var name string
+        base.Log().Printf("Adding button: %s", list.Games[j].Name)
         b.Text.Justification = sm.layout.Text.Justification
         b.Text.Size = sm.layout.Text.Size
-        if net_id == list.Games[i].Denizens_id {
-          b.Text.String = fmt.Sprintf("%s vs %s as the Intruders", list.Games[i].Name, list.Games[i].Intruders_name)
+        if net_id == list.Games[j].Denizens_id {
+          name = list.Games[j].Name
         } else {
-          b.Text.String = fmt.Sprintf("%s vs %s as the Denizens", list.Games[i].Name, list.Games[i].Denizens_name)
+          name = list.Games[j].Name
         }
+        b.Text.String = "Join!"
         game_key := list.Game_keys[i]
         active := (glb == &sm.layout.Active)
         in_joingame := false
@@ -270,7 +284,7 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
               }()
               select {
               case <-done:
-              case <-time.After(10 * time.Second):
+              case <-time.After(5 * time.Second):
                 resp.Err = "Couldn't connect to server."
               }
               <-sm.control.in
@@ -299,7 +313,7 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
               }()
               select {
               case <-done:
-              case <-time.After(10 * time.Second):
+              case <-time.After(5 * time.Second):
                 resp.Err = "Couldn't connect to server."
               }
               <-sm.control.in
@@ -317,21 +331,62 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
             }()
           }
         }
-        glb.games = append(glb.games, &b)
+        if active {
+          d := Button{}
+          d.Text.String = "Delete!"
+          d.Text.Justification = "right"
+          d.Text.Size = sm.layout.Text.Size
+          d.f = func(interface{}) {
+            go func() {
+              var req mrgnet.KillRequest
+              req.Id = net_id
+              req.Game_key = game_key
+              var resp mrgnet.KillResponse
+              done := make(chan bool, 1)
+              go func() {
+                mrgnet.DoAction("kill", req, &resp)
+                done <- true
+              }()
+              select {
+              case <-done:
+              case <-time.After(5 * time.Second):
+                resp.Err = "Couldn't connect to server."
+              }
+              <-sm.control.in
+              if resp.Err != "" {
+                sm.layout.Error.err = resp.Err
+                base.Error().Printf("Couldn't kill game: %v", resp.Err)
+              } else {
+                algorithm.Choose2(&glb.games, func(gf gameField) bool {
+                  return gf.key != req.Game_key
+                })
+              }
+              sm.control.out <- struct{}{}
+            }()
+          }
+          glb.games = append(glb.games, gameField{&b, &d, name, list.Game_keys[i]})
+        } else {
+          glb.games = append(glb.games, gameField{&b, nil, name, list.Game_keys[i]})
+        }
       }
-      sort.Sort(onlineButtonSlice(glb.games))
       glb.Scroll.Height = int(base.GetDictionary(sm.layout.Text.Size).MaxHeight() * float64(len(list.Games)))
 
     default:
     }
 
     if (gui.Point{sm.mx, sm.my}.Inside(glb.Scroll.Region())) {
-      for _, button := range glb.games {
-        button.Think(sm.region.X, sm.region.Y, sm.mx, sm.my, dt)
+      for _, game := range glb.games {
+        game.join.Think(sm.region.X, sm.region.Y, sm.mx, sm.my, dt)
+        if game.delete != nil {
+          game.delete.Think(sm.region.X, sm.region.Y, sm.mx, sm.my, dt)
+        }
       }
     } else {
-      for _, button := range glb.games {
-        button.Think(sm.region.X, sm.region.Y, 0, 0, dt)
+      for _, game := range glb.games {
+        game.join.Think(sm.region.X, sm.region.Y, 0, 0, dt)
+        if game.delete != nil {
+          game.delete.Think(sm.region.X, sm.region.Y, 0, 0, dt)
+        }
       }
     }
     glb.Scroll.Think(dt)
@@ -360,8 +415,11 @@ func (sm *OnlineMenu) Respond(g *gui.Gui, group gui.EventGroup) bool {
     for _, glb := range []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted} {
       inside := gui.Point{sm.mx, sm.my}.Inside(glb.Scroll.Region())
       if cursor == nil || inside {
-        for _, button := range glb.games {
-          if button.handleClick(sm.mx, sm.my, nil) {
+        for _, game := range glb.games {
+          if game.join.handleClick(sm.mx, sm.my, nil) {
+            return true
+          }
+          if game.delete != nil && game.delete.handleClick(sm.mx, sm.my, nil) {
             return true
           }
         }
@@ -378,8 +436,11 @@ func (sm *OnlineMenu) Respond(g *gui.Gui, group gui.EventGroup) bool {
   for _, glb := range []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted} {
     inside := gui.Point{sm.mx, sm.my}.Inside(glb.Scroll.Region())
     if cursor == nil || inside {
-      for _, button := range glb.games {
-        if button.Respond(group, nil) {
+      for _, game := range glb.games {
+        if game.join.Respond(group, nil) {
+          hit = true
+        }
+        if game.delete != nil && game.delete.Respond(group, nil) {
           hit = true
         }
       }
@@ -403,12 +464,23 @@ func (sm *OnlineMenu) Draw(region gui.Region) {
 
   d := base.GetDictionary(sm.layout.Text.Size)
   for _, glb := range []*gameListBox{&sm.layout.Active, &sm.layout.Unstarted} {
-    glb.Scroll.Region().PushClipPlanes()
+    title_d := base.GetDictionary(glb.Title.Size)
+    title_x := float64(glb.Scroll.X + glb.Scroll.Dx/2)
+    title_y := float64(glb.Scroll.Y + glb.Scroll.Dy)
+    title_d.RenderString(glb.Title.Text, title_x, title_y, 0, title_d.MaxHeight(), gui.Center)
+
     sx := glb.Scroll.X
-    sy := glb.Scroll.Top() - int(d.MaxHeight())
-    for _, button := range glb.games {
-      button.RenderAt(sx, sy)
+    sy := glb.Scroll.Top()
+    glb.Scroll.Region().PushClipPlanes()
+    for _, game := range glb.games {
       sy -= int(d.MaxHeight())
+      game.join.RenderAt(sx, sy)
+      gl.Disable(gl.TEXTURE_2D)
+      gl.Color4ub(255, 255, 255, 255)
+      d.RenderString(game.name, float64(sx+50), float64(sy), 0, d.MaxHeight(), gui.Left)
+      if game.delete != nil {
+        game.delete.RenderAt(sx+50+glb.Scroll.Dx-100, sy)
+      }
     }
     glb.Scroll.Region().PopClipPlanes()
   }
