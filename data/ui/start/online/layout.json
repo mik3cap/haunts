@@ -82,6 +82,13 @@
       "Justification": "left"
     }
   },
+  "GameStats": {
+    "X": 75,
+    "Y": 200,
+    "Dx": 200,
+    "Dy": 200,
+    "Size": 15
+  },
   "Error": {
     "X": 100,
     "Y": 100,

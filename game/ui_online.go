@@ -31,6 +31,7 @@ type gameField struct {
   join, delete ButtonLike
   name         string
   key          mrgnet.GameKey
+  game         mrgnet.Game
 }
 
 type onlineLayout struct {
@@ -43,6 +44,11 @@ type onlineLayout struct {
 
   User    TextEntry
   NewGame Button
+
+  GameStats struct {
+    X, Y, Dx, Dy int
+    Size         int
+  }
 
   Error struct {
     X, Y int
@@ -76,7 +82,11 @@ type OnlineMenu struct {
   }
 
   ui gui.WidgetParent
+
+  hover_game *gameField
 }
+
+var net_id mrgnet.NetId
 
 func InsertOnlineMenu(ui gui.WidgetParent) error {
   var sm OnlineMenu
@@ -102,7 +112,6 @@ func InsertOnlineMenu(ui gui.WidgetParent) error {
   }
   sm.ui = ui
 
-  var net_id mrgnet.NetId
   fmt.Sscanf(base.GetStoreVal("netid"), "%d", &net_id)
   if net_id == 0 {
     net_id = mrgnet.NetId(mrgnet.RandomId())
@@ -370,9 +379,9 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
               sm.control.out <- struct{}{}
             }()
           }
-          glb.games = append(glb.games, gameField{&b, &d, name, list.Game_keys[j]})
+          glb.games = append(glb.games, gameField{&b, &d, name, list.Game_keys[j], list.Games[j]})
         } else {
-          glb.games = append(glb.games, gameField{&b, nil, name, list.Game_keys[j]})
+          glb.games = append(glb.games, gameField{&b, nil, name, list.Game_keys[j], list.Games[j]})
         }
       }
       glb.Scroll.Height = int(base.GetDictionary(sm.layout.Text.Size).MaxHeight() * float64(len(list.Games)))
@@ -380,8 +389,18 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
     default:
     }
 
+    sm.hover_game = nil
     if (gui.Point{sm.mx, sm.my}.Inside(glb.Scroll.Region())) {
-      for _, game := range glb.games {
+      for i := range glb.games {
+        game := &glb.games[i]
+        var region gui.Region
+        region.X = game.join.(*Button).bounds.x
+        region.Y = game.join.(*Button).bounds.y
+        region.Dx = glb.Scroll.Dx
+        region.Dy = int(base.GetDictionary(sm.layout.Text.Size).MaxHeight())
+        if (gui.Point{sm.mx, sm.my}.Inside(region)) {
+          sm.hover_game = game
+        }
         game.join.Think(sm.region.X, sm.region.Y, sm.mx, sm.my, dt)
         if game.delete != nil {
           game.delete.Think(sm.region.X, sm.region.Y, sm.mx, sm.my, dt)
@@ -497,6 +516,39 @@ func (sm *OnlineMenu) Draw(region gui.Region) {
   sx := sm.layout.User.Entry.X + sm.layout.User.Entry.Dx + 10
   sy := sm.layout.User.Button.Y
   d.RenderString("Name Updated", float64(sx), float64(sy), 0, d.MaxHeight(), gui.Left)
+
+  if sm.hover_game != nil {
+    game := sm.hover_game
+    gl.Disable(gl.TEXTURE_2D)
+    gl.Color4ub(255, 255, 255, 255)
+    d := base.GetDictionary(sm.layout.GameStats.Size)
+    x := float64(sm.layout.GameStats.X + sm.layout.GameStats.Dx/2)
+    y := float64(sm.layout.GameStats.Y+sm.layout.GameStats.Dy) - d.MaxHeight()
+
+    if game.game.Denizens_id == net_id {
+      d.RenderString("You: Denizens", x, y, 0, d.MaxHeight(), gui.Center)
+    } else {
+      d.RenderString("You: Intruders", x, y, 0, d.MaxHeight(), gui.Center)
+    }
+    y -= d.MaxHeight()
+    if game.game.Denizens_id == net_id {
+      var opponent string
+      if game.game.Intruders_name == "" {
+        opponent = "no opponent yet"
+      } else {
+        opponent = fmt.Sprintf("Vs: %s", game.game.Intruders_name)
+      }
+      d.RenderString(opponent, x, y, 0, d.MaxHeight(), gui.Center)
+    } else {
+      d.RenderString(fmt.Sprintf("Vs: %s", game.game.Denizens_name), x, y, 0, d.MaxHeight(), gui.Center)
+    }
+    y -= d.MaxHeight()
+    if (game.game.Denizens_id == net_id) == (len(game.game.Execs)%2 == 0) {
+      d.RenderString("Your move", x, y, 0, d.MaxHeight(), gui.Center)
+    } else {
+      d.RenderString("Their move", x, y, 0, d.MaxHeight(), gui.Center)
+    }
+  }
 
   if sm.layout.Error.err != "" {
     gl.Color4ub(255, 0, 0, 255)
