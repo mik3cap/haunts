@@ -107,6 +107,7 @@ func startGameScript(gp *GamePanel, path string, player *Player, data map[string
     "RemoveWaypoint":                    func() { gp.script.L.PushGoFunctionAsCFunction(removeWaypoint(gp)) },
     "Rand":                              func() { gp.script.L.PushGoFunctionAsCFunction(randFunc(gp)) },
     "Sleep":                             func() { gp.script.L.PushGoFunctionAsCFunction(sleepFunc(gp)) },
+    "EndGame":                           func() { gp.script.L.PushGoFunctionAsCFunction(endGameFunc(gp)) },
   })
   gp.script.L.SetMetaTable(-2)
   gp.script.L.SetGlobal("Script")
@@ -1679,6 +1680,18 @@ func sleepFunc(gp *GamePanel) lua.GoFunction {
     }
     seconds := L.ToNumber(-1)
     time.Sleep(time.Microsecond * time.Duration(1000000*seconds))
+    return 1
+  }
+}
+
+func endGameFunc(gp *GamePanel) lua.GoFunction {
+  return func(L *lua.State) int {
+    if !LuaCheckParamsOk(L, "EndGame") {
+      return 0
+    }
+    gp.game.Ents = nil
+    gp.game.Think(1) // This should clean things up
+    Restart()
     return 1
   }
 }
