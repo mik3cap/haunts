@@ -158,8 +158,14 @@ func InsertOnlineMenu(ui gui.WidgetParent) error {
     glb.Up.f = func(interface{}) {
       glb.Scroll.Up()
     }
+    glb.Up.valid_func = func() bool {
+      return glb.Scroll.Height > glb.Scroll.Dy
+    }
     glb.Down.f = func(interface{}) {
       glb.Scroll.Down()
+    }
+    glb.Down.valid_func = func() bool {
+      return glb.Scroll.Height > glb.Scroll.Dy
     }
 
     glb.update = make(chan mrgnet.ListGamesResponse)
@@ -263,7 +269,7 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
           name = list.Games[j].Name
         }
         b.Text.String = "Join!"
-        game_key := list.Game_keys[i]
+        game_key := list.Game_keys[j]
         active := (glb == &sm.layout.Active)
         in_joingame := false
         b.f = func(interface{}) {
@@ -364,9 +370,9 @@ func (sm *OnlineMenu) Think(g *gui.Gui, t int64) {
               sm.control.out <- struct{}{}
             }()
           }
-          glb.games = append(glb.games, gameField{&b, &d, name, list.Game_keys[i]})
+          glb.games = append(glb.games, gameField{&b, &d, name, list.Game_keys[j]})
         } else {
-          glb.games = append(glb.games, gameField{&b, nil, name, list.Game_keys[i]})
+          glb.games = append(glb.games, gameField{&b, nil, name, list.Game_keys[j]})
         }
       }
       glb.Scroll.Height = int(base.GetDictionary(sm.layout.Text.Size).MaxHeight() * float64(len(list.Games)))
@@ -467,6 +473,8 @@ func (sm *OnlineMenu) Draw(region gui.Region) {
     title_d := base.GetDictionary(glb.Title.Size)
     title_x := float64(glb.Scroll.X + glb.Scroll.Dx/2)
     title_y := float64(glb.Scroll.Y + glb.Scroll.Dy)
+    gl.Disable(gl.TEXTURE_2D)
+    gl.Color4ub(255, 255, 255, 255)
     title_d.RenderString(glb.Title.Text, title_x, title_y, 0, title_d.MaxHeight(), gui.Center)
 
     sx := glb.Scroll.X

@@ -27,21 +27,21 @@
       "Size": 15
     },
     "Up": {
-      "X": 900,
-      "Y": 350,
+      "X": 915,
+      "Y": 446,
       "Texture": {
-        "Path": "ui/up_arrow.png"
+        "Path": "ui/arrow_up.png"
       }
     },
     "Down": {
-      "X": 820,
-      "Y": 350,
+      "X": 915,
+      "Y": 340,
       "Texture": {
-        "Path": "ui/down_arrow.png"
+        "Path": "ui/arrow_down.png"
       }
     },
     "Scroll": {
-      "X": 200,
+      "X": 300,
       "Y": 350,
       "Dx": 620,
       "Dy": 120
@@ -53,21 +53,21 @@
       "Size": 15
     },
     "Up": {
-      "X": 900,
-      "Y": 110,
+      "X": 915,
+      "Y": 216,
       "Texture": {
-        "Path": "ui/up_arrow.png"
+        "Path": "ui/arrow_up.png"
       }
     },
     "Down": {
-      "X": 820,
+      "X": 915,
       "Y": 110,
       "Texture": {
-        "Path": "ui/down_arrow.png"
+        "Path": "ui/arrow_down.png"
       }
     },
     "Scroll": {
-      "X": 200,
+      "X": 300,
       "Y": 110,
       "Dx": 620,
       "Dy": 120
