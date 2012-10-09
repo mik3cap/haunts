@@ -191,6 +191,10 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
+    next_store = {}
+    next_store.occupiedPoints = store.occupiedPoints
+    next_store.OpGoal = store.OpGoal
+    next_store.OpCurrent = store.OpCurrent
     if intruders then
       Script.DialogBox("ui/dialog/Lvl10/pass_to_denizens.json")
       Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Denizens.json", {points=store.occupiedPoints, countdown=(store.OpGoal - store.OpCurrent)})
@@ -209,34 +213,35 @@ function RoundEnd(intruders, round)
 
     if not intruders then
       --at start of intruder turn, push the score by the number of occupied op points.
-      store.occupiedPoints = 0
+      next_store.occupiedPoints = 0
       for i = 1, 3, 1 do
         for _, ent in pairs(Script.GetAllEnts()) do
           if ent.Side.Intruder then
             if GetDistanceBetweenPoints(store.OpPoints[i], ent.Pos) <= 3 then
-              store.occupiedPoints = store.occupiedPoints + 1
+              next_store.occupiedPoints = next_store.occupiedPoints + 1
               break
             end
           end
         end
       end
-      store.OpCurrent = store.OpCurrent + store.occupiedPoints
-      if store.OpCurrent >= store.OpGoal then
+      next_store.OpCurrent = next_store.OpCurrent + next_store.occupiedPoints
+      if next_store.OpCurrent >= next_store.OpGoal then
         Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Intruders.json")
       else 
-        Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Intruders.json", {points=store.occupiedPoints, countdown=(store.OpGoal - store.OpCurrent)})
+        Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Intruders.json", {points=next_store.occupiedPoints, countdown=(next_store.OpGoal - next_store.OpCurrent)})
       end
     end
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
+    execs = store.execs
     Script.LoadGameState(store.game)
 
     --focus the camera on somebody on each team.
     side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
     Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-    for _, exec in pairs(store.execs) do
+    for _, exec in pairs(execs) do
       bDone = false
       if exec.script_spawn then
         doSpawn(exec)
@@ -269,6 +274,9 @@ function RoundEnd(intruders, round)
           store.LastDenizenEnt = exec.Ent
         end 
       end
+    end
+    for key, value in pairs(next_store) do
+      store[key] = value
     end
     store.execs = {}
   end

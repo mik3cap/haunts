@@ -361,19 +361,20 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
+    next_store = {}
     if intruders then
       Script.DialogBox("ui/dialog/Lvl04/pass_to_denizens.json", {rooms=(5-store.nBeaconedRooms)})
 
       if store.bTalkedAboutBeaconInFirstRoom and not store.bToldDenisAboutFirstBeacon then
-        store.bToldDenisAboutFirstBeacon = true
+        next_store.bToldDenisAboutFirstBeacon = true
         Script.DialogBox("ui/dialog/Lvl04/Lvl_04_First_Beacon_Denizens.json")
       end
 
     else
-      store.IntrudersPlacedBeaconLastTurn = false
+      next_store.IntrudersPlacedBeaconLastTurn = false
 
       if not store.InitialPassToIntrudersDone then
-        store.InitialPassToIntrudersDone = true
+        next_store.InitialPassToIntrudersDone = true
         Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders_initial.json")        
       else
         Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders.json", {rooms=(5-store.nBeaconedRooms)})
@@ -381,7 +382,7 @@ function RoundEnd(intruders, round)
 
 
       if not store.bDoneIntruderIntro then
-        store.bDoneIntruderIntro = true
+        next_store.bDoneIntruderIntro = true
         Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Opening_Intruders.json")
         Script.FocusPos(Script.GetSpawnPointsMatching("Intruders_Start")[1].Pos)
       end
@@ -400,13 +401,14 @@ function RoundEnd(intruders, round)
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
+    execs = store.execs
     Script.LoadGameState(store.game)
 
     --focus the camera on somebody on each team.
     side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
     Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-    for _, exec in pairs(store.execs) do
+    for _, exec in pairs(execs) do
       bDone = false
       if exec.script_spawn then
         doSpawn(exec)
@@ -439,6 +441,9 @@ function RoundEnd(intruders, round)
           LastDenizenEnt = exec.Ent
         end 
       end
+    end
+    for key, value in pairs(next_store) do
+      store[key] = value
     end
     store.execs = {}
   end

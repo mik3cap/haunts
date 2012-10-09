@@ -197,6 +197,7 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
+    next_store = {}
     if intruders then
       Script.DialogBox("ui/dialog/Lvl09/pass_to_denizens.json")
     else
@@ -218,13 +219,14 @@ function RoundEnd(intruders, round)
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
+    execs = store.execs
     Script.LoadGameState(store.game)
 
     --focus the camera on somebody on each team.
     side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
     Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-    for _, exec in pairs(store.execs) do
+    for _, exec in pairs(execs) do
       bDone = false
       if exec.script_spawn then
         doSpawn(exec)
@@ -257,6 +259,9 @@ function RoundEnd(intruders, round)
           store.LastDenizenEnt = exec.Ent
         end 
       end
+    end
+    for key, value in pairs(next_store) do
+      store[key] = value
     end
     store.execs = {}
   end

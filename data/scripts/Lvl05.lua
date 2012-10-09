@@ -340,13 +340,14 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
+    next_store = {}
     if intruders then
       Script.DialogBox("ui/dialog/Lvl05/pass_to_denizens.json")
       if store.nTurnsRemaining == 0 and store.bSummoning then
         Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Victory_Denizens.json")
       end
       if store.bMasterAttacked then
-        store.bMasterAttacked = false --keep us from showing this more than once.
+        next_store.bMasterAttacked = false --keep us from showing this more than once.
         Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Master_Attacked_Denizens.json")
       end
       if store.bSummoning then
@@ -365,7 +366,7 @@ function RoundEnd(intruders, round)
         
         if store.bSummoning then
           --reduce the turns remaining and tell the intruders about it.
-          store.nTurnsRemaining = store.nTurnsRemaining - 1
+          next_store.nTurnsRemaining = store.nTurnsRemaining - 1
           if store.nTurnsRemaining == 0 then
             Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Last_Turn_Intruders.json")
           else
@@ -377,13 +378,14 @@ function RoundEnd(intruders, round)
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
+    execs = store.execs
     Script.LoadGameState(store.game)
 
     --focus the camera on somebody on each team.
     side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
     Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-    for _, exec in pairs(store.execs) do
+    for _, exec in pairs(execs) do
       bDone = false
       if exec.script_spawn then
         doSpawn(exec)
@@ -408,6 +410,9 @@ function RoundEnd(intruders, round)
           LastDenizenEnt = GetMasterEnt() --always the master on this board
         end 
       end
+    end
+    for key, value in pairs(next_store) do
+      store[key] = value
     end
     store.execs = {}
     if not intruders then 
