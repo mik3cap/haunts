@@ -53,7 +53,7 @@ func (b *Button) handleClick(x, y int, data interface{}) bool {
   in := pointInsideRect(x, y, b.bounds.x, b.bounds.y, b.bounds.dx, b.bounds.dy)
   if in && b.valid {
     b.f(data)
-    sound.PlaySound("Haunts/SFX/UI/Select")
+    sound.PlaySound("Haunts/SFX/UI/Select", 0.75)
   }
   return in
 }
@@ -95,7 +95,7 @@ func (b *Button) Think(x, y, mx, my int, dt int64) {
   }
   in := b.valid && pointInsideRect(mx, my, b.bounds.x, b.bounds.y, b.bounds.dx, b.bounds.dy)
   if in && !b.was_in {
-    sound.PlaySound("Haunts/SFX/UI/Tick")
+    sound.PlaySound("Haunts/SFX/UI/Tick", 0.75)
   }
   b.was_in = in
   b.shade = doShading(b.shade, in, dt)

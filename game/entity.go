@@ -139,15 +139,21 @@ func (e *Entity) LoadAi() {
 func (e *Entity) Load(g *Game) {
   e.sprite.Load(e.Sprite_path.String())
   e.Sprite().SetTriggerFunc(func(s *sprite.Sprite, name string) {
+    x, y := e.Pos()
+    dx, dy := e.Dims()
+    volume := 1.0
+    if e.Side() == SideExplorers || e.Side() == SideHaunt {
+      volume = e.Game().ViewFrac(x, y, dx, dy)
+    }
     if e.current_action != nil {
       if sound_name, ok := e.current_action.SoundMap()[name]; ok {
-        sound.PlaySound(sound_name)
+        sound.PlaySound(sound_name, volume)
         return
       }
     }
     if e.Sounds != nil {
       if sound_name, ok := e.Sounds[name]; ok {
-        sound.PlaySound(sound_name)
+        sound.PlaySound(sound_name, volume)
       }
     }
   })

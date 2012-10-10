@@ -1538,7 +1538,7 @@ func playSound(gp *GamePanel) lua.GoFunction {
     if !LuaCheckParamsOk(L, "PlaySound", LuaString) {
       return 0
     }
-    sound.PlaySound(L.ToString(-1))
+    sound.PlaySound(L.ToString(-1), 1.0)
     return 0
   }
 }

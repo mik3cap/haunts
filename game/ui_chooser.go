@@ -172,11 +172,11 @@ func (ob *OptionBasic) Height() int {
 }
 func (ob *OptionBasic) Think(hovered, selected, selectable bool, dt int64) {
   if selectable && hovered && !ob.was_over {
-    sound.PlaySound("Haunts/SFX/UI/Tick")
+    sound.PlaySound("Haunts/SFX/UI/Tick", 0.75)
   }
   ob.was_over = hovered
   if ob.was_selected != selected {
-    sound.PlaySound("Haunts/SFX/UI/Select")
+    sound.PlaySound("Haunts/SFX/UI/Select", 0.75)
   }
   ob.was_selected = selected
   switch {

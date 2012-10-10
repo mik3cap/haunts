@@ -1322,6 +1322,24 @@ func (g *Game) TeamLos(side Side, x, y, dx, dy int) bool {
   return false
 }
 
+func (g *Game) ViewFrac(x, y, dx, dy int) float64 {
+  if g == nil {
+    return 1.0
+  }
+  team_los := g.viewer.Los_tex.Pix()
+  for i := x; i < x+dx; i++ {
+    for j := y; j < y+dy; j++ {
+      if i < 0 || j < 0 || i >= len(team_los) || j >= len(team_los[0]) {
+        continue
+      }
+      if team_los[i][j] >= house.LosVisibilityThreshold {
+        return float64(team_los[i][j]-house.LosVisibilityThreshold) / float64(255-house.LosVisibilityThreshold)
+      }
+    }
+  }
+  return 0.0
+}
+
 func (g *Game) mergeLos(side Side) {
   var pix [][]byte
   switch side {

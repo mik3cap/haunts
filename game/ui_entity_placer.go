@@ -215,7 +215,7 @@ func (ep *EntityPlacer) Respond(g *gui.Gui, group gui.EventGroup) bool {
       cost := ep.roster[ent.Name]
       ep.points -= cost
       ep.ents = append(ep.ents, ent)
-      sound.PlaySound("Haunts/SFX/UI/Place")
+      sound.PlaySound("Haunts/SFX/UI/Place", 1.0)
       if cost <= ep.points {
         ep.game.new_ent = MakeEntity(ent.Name, ep.game)
         ep.game.viewer.AddDrawable(ep.game.new_ent)
