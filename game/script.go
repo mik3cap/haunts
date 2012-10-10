@@ -207,6 +207,7 @@ func startGameScript(gp *GamePanel, path string, player *Player, data map[string
             states = resp.Game.After[len(resp.Game.Execs)-1]
           }
           loadGameStateRaw(gp, gp.script.L, string(states))
+          gp.script.L.DoString("OnStartup()")
 
           gp.game.net.game = resp.Game
           gp.game.net.key = game_key
@@ -244,6 +245,7 @@ func startGameScript(gp *GamePanel, path string, player *Player, data map[string
         gp.script.syncEnd()
       } else {
         gp.script.L.DoString("Init(__data)")
+        gp.script.L.DoString("OnStartup()")
         for i := range gp.game.Ents {
           gp.game.Ents[i].Ai.Activate()
         }
