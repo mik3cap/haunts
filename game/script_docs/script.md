@@ -258,3 +258,8 @@ Returns a random integer in the range 1..n, inclusive.
 ###Script.__Sleep__(_s_)
 Sleeps to _s_ seconds.  _s_ may be a floating point number, so .5 will sleep for half a second.  
 
+------
+
+###Script.__EndGame__()
+Returns to the main menu.  
+
