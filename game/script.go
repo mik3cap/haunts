@@ -889,7 +889,7 @@ func spawnEntitySomewhereInSpawnPoints(gp *GamePanel) lua.GoFunction {
       }
     }
     if count == 0 {
-      base.Error().Printf("Unable to find an available position to spawn")
+      base.Error().Printf("Unable to find an available position to spawn %s", name)
       return 0
     }
     if ent == nil {
