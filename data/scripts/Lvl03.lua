@@ -378,11 +378,11 @@ function checkExec(exec, is_playback)
   end  
 
   --have the intruders attempted to rescue a patient?
-  if  exec.Ent.Side.Intruder then
+  if exec.Ent.Side.Intruder then
     patientToActivate = nil
     patientToActivate = EntIsNextToPatient(exec.Ent)
     if patientToActivate then
-      SpawnedEnt = SpawnIntruderOrMonster(patientToActivate)
+      SpawnedEnt = SpawnIntruderOrMonster(patientToActivate, not is_playback)
     end
   end 
 
@@ -412,13 +412,15 @@ function checkExec(exec, is_playback)
   end 
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them
-  if exec.Ent.ApCur == 0 then
-    nextEnt = GetEntityWithMostAP(exec.Ent.Side)
-    if nextEnt.ApCur > 0 then
-      if exec.Action.Type ~= "Move" then
-        Script.Sleep(2)
-      end      
-      Script.SelectEnt(nextEnt)
+  if not is_playback then
+    if exec.Ent.ApCur == 0 then
+      nextEnt = GetEntityWithMostAP(exec.Ent.Side)
+      if nextEnt.ApCur > 0 then
+        if exec.Action.Type ~= "Move" then
+          Script.Sleep(2)
+        end      
+        Script.SelectEnt(nextEnt)
+      end
     end
   end
 end
@@ -430,7 +432,7 @@ function DoPlayback(state, execs)
   side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
   Script.FocusPos(GetEntityWithMostAP(side2).Pos)
 
-  for _, exec in pairs(execs) do
+  for i, exec in pairs(execs) do
     bDone = false
     if exec.script_spawn then
       doSpawn(exec)
@@ -453,17 +455,23 @@ function DoPlayback(state, execs)
       bDone = true
     end      
     if not bDone then
+      for k, v in pairs(exec) do
+      end
       Script.DoExec(exec)
 
       --will be used at turn start to try to reselect the last thing they acted with.
-      if exec.Ent.Side == "intruders" then
-        store.LastIntruderEnt = exec.Ent
-      end 
-      if exec.Ent.Side == "denizens" then
-        store.LastDenizenEnt = exec.Ent
-      end 
+      if exec.Ent then
+        if exec.Ent.Side == "intruders" then
+          store.LastIntruderEnt = exec.Ent
+        end 
+        if exec.Ent.Side == "denizens" then
+          store.LastDenizenEnt = exec.Ent
+        end 
+      end
     end
-    checkExec(exec, true)
+    if exec.Ent then
+      checkExec(exec, true)
+    end
   end
 end
 
@@ -516,7 +524,7 @@ end
 
 function StoreSpawn(name, spawnPos)
   spawn_exec = {script_spawn=true, name=name, pos=spawnPos}
-  store.execs[table.getn(store.execs) + 1] = spawn_exec
+  -- store.execs[table.getn(store.execs) + 1] = spawn_exec
   return doSpawn(spawn_exec)
 end
 
@@ -545,7 +553,7 @@ end
 
 function StoreDespawn(ent)
   despawn_exec = {script_despawn=true, entity=ent}
-  store.execs[table.getn(store.execs) + 1] = despawn_exec
+  -- store.execs[table.getn(store.execs) + 1] = despawn_exec
   deSpawn(despawn_exec)
 end
 
@@ -636,7 +644,7 @@ function pointIsInSpawn(pos, sp)
   return pos.X >= sp.Pos.X and pos.X < sp.Pos.X + sp.Dims.Dx and pos.Y >= sp.Pos.Y and pos.Y < sp.Pos.Y + sp.Dims.Dy
 end
 
-function SpawnIntruderOrMonster(entToKillAndReplace)
+function SpawnIntruderOrMonster(entToKillAndReplace, intruder)
   SpawnPos = entToKillAndReplace.Pos 
   StoreDespawn(entToKillAndReplace)
   thingToSpawn = ""
@@ -645,7 +653,9 @@ function SpawnIntruderOrMonster(entToKillAndReplace)
     store.nIntrudersFound = store.nIntrudersFound + 1
     if store.nIntrudersFound == 1 then
       thingToSpawn = "Collector"
-      Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder1.json")
+      if intruder then
+        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder1.json")
+      end
     end
   else
     if (Script.Rand(5) > 2 and store.nIntrudersFound <= 3) then
@@ -653,20 +663,28 @@ function SpawnIntruderOrMonster(entToKillAndReplace)
       store.nIntrudersFound = store.nIntrudersFound + 1
       if store.nIntrudersFound == 2 then
         thingToSpawn = "Reporter"
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder2.json")
+        if intruder then
+          Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder2.json")
+        end
       end
       if store.nIntrudersFound == 3 then
         thingToSpawn = "Detective"
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder3.json")    
+        if intruder then
+          Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Rescued_Intruder3.json")    
+        end
       end
     else
       --Spawn monster
       store.nMonstersFound = store.nMonstersFound + 1
       if store.nMonstersFound == 1 then
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Spawned_Infected1.json") 
+        if intruder then
+          Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Spawned_Infected1.json") 
+        end
       end
       if store.nMonstersFound > 1 then
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Spawned_Addl_Infected.json") 
+        if intruder then
+          Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Spawned_Addl_Infected.json") 
+        end
       end    
       thingToSpawn = "Infected"
     end
