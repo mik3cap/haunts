@@ -3,9 +3,7 @@ function Think()
   end
   target = GetTarget()
   if target then
-  	print("doingstuff")
     HeadTowards(target.Pos)
-    print("Didstuff")
   end
   MoveLikeZombie()
   return false
