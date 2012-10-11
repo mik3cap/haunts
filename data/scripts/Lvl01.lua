@@ -31,6 +31,9 @@ end
 -- not Init is run.
 function OnStartup()
   Script.PlayMusic("Haunts/Music/Adaptive/Bed 1")
+  if not store.tension then
+    store.tension = 0.0
+  end
   Script.SetMusicParam("tension_level", store.tension)
   if Net.Active() then
     if Side() == "Denizens" then

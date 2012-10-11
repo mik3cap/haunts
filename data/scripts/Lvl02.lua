@@ -16,6 +16,9 @@ end
 
 function OnStartup()
   Script.PlayMusic("Haunts/Music/Adaptive/Bed 1")
+  if not store.tension then
+    store.tension = 0.0
+  end
   Script.SetMusicParam("tension_level", store.tension)
   if Net.Active() then
     if Side() == "Denizens" then
@@ -295,8 +298,8 @@ function RoundEnd(intruders, round)
     if intruders then
       Script.DialogBox("ui/dialog/Lvl02/pass_to_denizens.json")
     else
-      if not bIntruderIntroDone then
-        bIntruderIntroDone = true
+      if not store.bIntruderIntroDone then
+        store.bIntruderIntroDone = true
         Script.DialogBox("ui/dialog/Lvl02/pass_to_intruders.json")
         Script.DialogBox("ui/dialog/Lvl02/Lvl_02_Opening_Intruders.json")
         Script.SetMusicParam("tension_level", 0.2)
@@ -362,8 +365,8 @@ function DoPlayback(state, execs)
 end
 
 function intrudersOnRound()
-  if not bIntruderIntroDone then
-    bIntruderIntroDone = true
+  if not store.bIntruderIntroDone then
+    store.bIntruderIntroDone = true
     Script.DialogBox("ui/dialog/Lvl02/Lvl_02_Opening_Intruders.json")
     Script.SetMusicParam("tension_level", 0.2)
     store.tension = 0.2

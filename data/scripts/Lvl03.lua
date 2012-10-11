@@ -16,28 +16,56 @@ function DoTutorials()
   --It would be super cool.
 end
 
+function Side()
+  if Net.Active() then
+    return Net.Side()
+  end
+  return store.side
+end
+
+function OnStartup()
+  Script.PlayMusic("Haunts/Music/Adaptive/Bed 1")
+  if not store.tension then
+    store.tension = 0.0
+  end
+  Script.SetMusicParam("tension_level", store.tension)
+  if Net.Active() then
+    if Side() == "Denizens" then
+      Script.SetVisibility("denizens")
+    else
+      Script.SetVisibility("intruders")
+    end
+  end
+end
+
 function Init(data)
-  side_choices = Script.ChooserFromFile("ui/start/versus/side.json")
+  if Net.Active() then
+    -- The Init() function will only be run by the player starting the game who
+    -- is necessarily the Denizens player.
+    side_choices = {"Denizens"}
+  else
+    side_choices = Script.ChooserFromFile("ui/start/versus/side.json")
+  end
 
   -- check data.map == "random" or something else
   Script.LoadHouse("Lvl_03_Sanitorium")
-  Script.PlayMusic("Haunts/Music/Adaptive/Bed 1")   
 
   store.side = side_choices[1]
-  if store.side == "Humans" then
+  if Side() == "Humans" or Net.Active() then
     Script.BindAi("denizen", "human")
     Script.BindAi("minions", "minions.lua")
     Script.BindAi("intruder", "human")
-  end
-  if store.side == "Denizens" then
-    Script.BindAi("denizen", "human")
-    Script.BindAi("minions", "minions.lua")
-    Script.BindAi("intruder", "intruders.lua")
-  end
-  if store.side == "Intruders" then
-    Script.BindAi("denizen", "denizens.lua")
-    Script.BindAi("minions", "minions.lua")
-    Script.BindAi("intruder", "human")
+  else
+    if Side() == "Denizens" then
+      Script.BindAi("denizen", "human")
+      Script.BindAi("minions", "minions.lua")
+      Script.BindAi("intruder", "intruders.lua")
+    end
+    if Side() == "Intruders" then
+      Script.BindAi("denizen", "denizens.lua")
+      Script.BindAi("minions", "minions.lua")
+      Script.BindAi("intruder", "human")
+    end
   end
 
   --spawn the objective point and the fake op points
@@ -76,7 +104,10 @@ function Init(data)
 end
 
 function intrudersSetup()
-
+  if not store.bDoneIntruderIntro then
+    store.bDoneIntruderIntro = true
+    Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Opening_Intruders.json")
+  end
   if IsStoryMode() then
     intruder_names = {"Ghost Hunter"}
     intruder_spawn = Script.GetSpawnPointsMatching("Intruder_Start1")
@@ -118,38 +149,55 @@ end
 function RoundStart(intruders, round)
   side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}
 
+  Script.SetLosMode("intruders", "entities")
+  Script.SetLosMode("denizens", "entities")
+
   if round == 1 then
     if intruders then
-      intrudersSetup()     
+      intrudersSetup()
     else
       Script.FocusPos(Script.GetSpawnPointsMatching("Master_Start")[1].Pos)
       Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Opening_Denizens.json")
       denizensSetup()
     end
-    Script.SetLosMode("intruders", "blind")
-    Script.SetLosMode("denizens", "blind")
 
     if IsStoryMode() then
       DoTutorials()
     end
 
     Script.EndPlayerInteraction()
-
+    store.game = nil
+    store.game = Script.SaveGameState()
+    if Net.Active() then
+      Net.UpdateState(store.game)
+    end
     return
   end
 
+  if Net.Active() then
+    if Side() == "Denizens" then
+      denizensOnRound()
+    else
+      intrudersOnRound()
+    end
+  end
+
+print("FLOOD: store.bFloodStarted: ", store.bFloodStarted)
   if store.bFloodStarted then
     --At the start of each denizen turn, we're going to randomly spawn attendants at 
     --the flood points.  Also need to prevent spawning within LoS of an intruder.
-
+print("FLOOD: doing flood")
     available_spawns = Script.GetSpawnPointsMatching("Flood_Point")
+print("FLOOD: available_spawns: ", table.getn(available_spawns))
     if TotalDeniCount() < 20 and intruders then
+      print("FLOOD: Spawning...")
       for i = 1, 3, 1 do
         --Pick an entity    
 
         --JONATHAN - The orderlies spawn at the start of the intruders turn and then move
         --on the next deni turn.  That's when the crash happens. 
         ent = Script.SpawnEntitySomewhereInSpawnPoints("Orderly", available_spawns, true)
+        print("FLOOD: Spawned")
         Script.SetAp(ent, 0)
       end
     end
@@ -170,11 +218,10 @@ function RoundStart(intruders, round)
     end 
   end
 
+  store.game = nil
   store.game = Script.SaveGameState()
   SelectCharAtTurnStart(side)
-  if store.side == "Humans" then
-    Script.SetLosMode("intruders", "entities")
-    Script.SetLosMode("denizens", "entities")
+  if Side() == "Humans" then
     if intruders then
       Script.SetVisibility("intruders")
     else
@@ -182,21 +229,33 @@ function RoundStart(intruders, round)
     end
     Script.ShowMainBar(true)
   else
-    Script.ShowMainBar(intruders == (store.side == "Intruders"))
+    Script.ShowMainBar(intruders == (Side() == "Intruders"))
+  end
+
+  -- We run the *OnRound() functions here so that they can modify data in the
+  -- store and still have it saved to the game state that we upload to the
+  -- server.
+  store.game = nil
+  if Net.Active() then
+    store.game = Script.SaveGameState()
+    print("Update State Round/Intruders: ", round, intruders)
+    Net.UpdateState(store.game)
+  else
+    store.game = Script.SaveGameState()
   end
 end
 
 function SelectCharAtTurnStart(side)
   bDone = false
-  if LastIntruderEnt then
+  if store.LastIntruderEnt then
     if side.Intruder then
-      Script.SelectEnt(LastIntruderEnt)
+      Script.SelectEnt(store.LastIntruderEnt)
       bDone = true
     end
   end  
-  if LastDenizenEnt and not bDone then
+  if store.LastDenizenEnt and not bDone then
     if side.Denizen then     
-      Script.SelectEnt(LastDenizenEnt)
+      Script.SelectEnt(store.LastDenizenEnt)
       bDone = true
     end  
   end   
@@ -234,7 +293,36 @@ function OnAction(intruders, round, exec)
     store.execs = {}
   end
   store.execs[table.getn(store.execs) + 1] = exec
+  checkExec(exec, false)
+end
+ 
+function intrudersOnRound()
+  if store.bIntrudersSpotted and not store.bTalkedAboutIntruderSpot then
+    --The master saw an intruder last turn. Need to let the truds know that the
+    --master can now set off the alarm.
+    store.bTalkedAboutIntruderSpot = true
+    Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Identified_Escapees_Intruders.json")
+  end
 
+  if store.bFloodStarted and not store.bToldIntrudersAboutAlarm then
+    --If the intruders don't know about the alarm, then the master triggered it this turn.
+    --Tell the intruders that the alarm has sounded.
+    store.bToldIntrudersAboutAlarm =  true
+    Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Alarm_Started_Intruders.json")
+  end
+end
+
+function denizensOnRound()
+  if store.bFloodStarted and not store.bToldDenizensAboutFloodStart then
+    --if we haven't told the denizens about flood start then the intruders must have
+    --got to the waypoint.  Tell deni's about both the waypoint and the alarm.
+    store.bToldDenizensAboutFloodStart = true
+    Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Intruders_Got_To_Waypoint_Denizens.json")
+    Script.SetMusicParam("tension_level", 0.7)
+  end 
+end
+
+function checkExec(exec, is_playback)
   if exec.Ent.Side.Intruder and GetDistanceBetweenEnts(exec.Ent, store.Waypoint) <= 3 and not store.bWaypointDown then
     --The intruders got to the first waypoint.
     store.bWaypointDown = true
@@ -249,6 +337,7 @@ function OnAction(intruders, round, exec)
 
     if not store.bFloodStarted then    
       --The denizens have not yet activated the alarm.
+    print("FLOOD: flood start B")
       store.bFloodStarted = true
       Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Waypoint_And_Alarm_Intruders.json")
       Script.SetMusicParam("tension_level", 0.9) 
@@ -310,13 +399,13 @@ function OnAction(intruders, round, exec)
 
   --if the deni master spotted the intruders, show dialogue
   if exec.Action.Name == "Identify Escapee" then
-
     -- Can only be used on an intruder, so we don't need to check the target.
     -- Once used, the flood starts.
-    -- bInstrudersSpotted = true
+    store.bIntrudersSpotted = true
 
     --Forcing the master to escape took too long.  Now if he spots the intruders,
     --he can sound the alarm immediately
+    print("FLOOD: flood start A")
     store.bFloodStarted = true
     Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Alarm_Started_Denizens.json")
     store.bToldDenizensAboutFloodStart = true
@@ -333,16 +422,70 @@ function OnAction(intruders, round, exec)
     end
   end
 end
- 
+
+function DoPlayback(state, execs)
+  Script.LoadGameState(state)
+
+  --focus the camera on somebody on each team.
+  side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
+  Script.FocusPos(GetEntityWithMostAP(side2).Pos)
+
+  for _, exec in pairs(execs) do
+    bDone = false
+    if exec.script_spawn then
+      doSpawn(exec)
+      bDone = true
+    end
+    if exec.script_despawn then
+      deSpawn(exec)
+      bDone = true
+    end
+    if exec.script_gear then
+      doGear(exec)
+      bDone = true
+    end
+    if exec.script_condition then
+      doCondition(exec)
+      bDone = true
+    end     
+    if exec.script_waypoint then
+      doWaypoint(exec)
+      bDone = true
+    end      
+    if not bDone then
+      Script.DoExec(exec)
+
+      --will be used at turn start to try to reselect the last thing they acted with.
+      if exec.Ent.Side == "intruders" then
+        store.LastIntruderEnt = exec.Ent
+      end 
+      if exec.Ent.Side == "denizens" then
+        store.LastDenizenEnt = exec.Ent
+      end 
+    end
+    checkExec(exec, true)
+  end
+end
 
 function RoundEnd(intruders, round)
+  if Net.Active() then
+    Net.UpdateExecs(Script.SaveGameState(), store.execs)
+    Script.ShowMainBar(false)
+    Net.Wait()
+    -- cur = Script.SaveGameState()
+    state, execs = Net.LatestStateAndExecs()
+    DoPlayback(state, execs)
+    Script.ShowMainBar(true)
+    return
+  end
+
   if round == 1 then
     return
   end
 
   bSkipOtherChecks = false  --Resets this every round
 
-  if store.side == "Humans" then
+  if Side() == "Humans" then
     Script.ShowMainBar(false)
     Script.SetLosMode("intruders", "blind")
     Script.SetLosMode("denizens", "blind")
@@ -352,85 +495,21 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
-    next_store = {}
     if intruders then
       Script.DialogBox("ui/dialog/Lvl03/pass_to_denizens.json")
-
-      if store.bFloodStarted and not store.bToldDenizensAboutFloodStart then
-        --if we haven't told the denizens about flood start then the intruders must have
-        --got to the waypoint.  Tell deni's about both the waypoint and the alarm.
-        next_store.bToldDenizensAboutFloodStart = true
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Intruders_Got_To_Waypoint_Denizens.json")
-        Script.SetMusicParam("tension_level", 0.7)
-      end 
     else
       Script.DialogBox("ui/dialog/Lvl03/pass_to_intruders.json")
-      if not store.bDoneIntruderIntro then
-        next_store.bDoneIntruderIntro = true
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Opening_Intruders.json")
-      end
-
-      if bIntrudersSpotted and not store.bTalkedAboutIntruderSpot then
-        --The master saw an intruder last turn. Need to let the truds know that the
-        --master can now set off the alarm.
-        next_store.bTalkedAboutIntruderSpot = true
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Identified_Escapees_Intruders.json")
-      end
-
-      if store.bFloodStarted and not store.bToldIntrudersAboutAlarm then
-        --If the intruders don't know about the alarm, then the master triggered it this turn.
-        --Tell the intruders that the alarm has sounded.
-        next_store.bToldIntrudersAboutAlarm =  true
-        Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Alarm_Started_Intruders.json")
-      end
     end
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
-    execs = store.execs
-    Script.LoadGameState(store.game)
+    DoPlayback(store.game, store.execs)
 
-    --focus the camera on somebody on each team.
-    side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
-    Script.FocusPos(GetEntityWithMostAP(side2).Pos)
-
-    for _, exec in pairs(execs) do
-      bDone = false
-      if exec.script_spawn then
-        doSpawn(exec)
-        bDone = true
-      end
-      if exec.script_despawn then
-        deSpawn(exec)
-        bDone = true
-      end
-      if exec.script_gear then
-        doGear(exec)
-        bDone = true
-      end
-      if exec.script_condition then
-        doCondition(exec)
-        bDone = true
-      end     
-      if exec.script_waypoint then
-        doWaypoint(exec)
-        bDone = true
-      end      
-      if not bDone then
-        Script.DoExec(exec)
-
-        --will be used at turn start to try to reselect the last thing they acted with.
-        if exec.Ent.Side == "intruders" then
-          LastIntruderEnt = exec.Ent
-        end 
-        if exec.Ent.Side == "denizens" then
-          LastDenizenEnt = exec.Ent
-        end 
-      end
-    end
-    for key, value in pairs(next_store) do
-      store[key] = value
-    end
+    if intruders then
+      denizensOnRound()
+    else
+      intrudersOnRound()
+    end    
     store.execs = {}
   end
 end
