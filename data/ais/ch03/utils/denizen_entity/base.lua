@@ -5,15 +5,10 @@ function MoveLikeZombie()
 end
 
 function GetTarget()
-  print("targetting1")
   targets = {"Ghost Hunter", "Collector", "Reporter", "Detective"}
-  print("targetting2")
   for _, target in pairs(targets) do
-    print("targetting3", target)
     ents = Cheat.GetEntsByName(target)
-    print("targetting4")
     if table.getn(ents) > 0 then
-      print("targetting5")
       return ents[1]
     end
   end
@@ -21,12 +16,10 @@ function GetTarget()
 end
 
 function CrushIntruder(debuf, cond, melee, ranged, aoe)
-  print("start crush")
   enemies = Utils.NearestNEntities(3, "intruder")
   if table.getn(enemies) == 0 then
     return false
   end
-  print("crush 2")
   nearest = enemies[1]
   if aoe and Me.Actions[aoe].Ap > Me.ApCur then
     aoe_dist = Me.Actions[aoe].Range
@@ -39,16 +32,13 @@ function CrushIntruder(debuf, cond, melee, ranged, aoe)
       Do.AoeAttack(aoe, pos)
     end
   end
-  print("crush 3")
   attack = ranged
   if not attack then
     attack = melee
   end
-  print("crush 3")
   max_dist = Me.Actions[attack].Range
   lowest_hp = 10000
   lowest_ent = nil
-  print("crush 4")
   for i, enemy in pairs(enemies) do
     dist = Utils.RangedDistBetweenEntities(Me, enemy)
     if dist and dist <= max_dist and enemy.HpCur < lowest_hp then
@@ -67,7 +57,10 @@ function CrushIntruder(debuf, cond, melee, ranged, aoe)
     end
   end
   target = lowest_ent
-  dist = Utils.RangedDistBetweenEntities(Me, target)
+  dist = nil
+  if target then
+    dist = Utils.RangedDistBetweenEntities(Me, target)
+  end
   if not dist then
     return false
   end
@@ -78,7 +71,6 @@ function CrushIntruder(debuf, cond, melee, ranged, aoe)
   if dist == 1 then
     attack = melee
   end
-  print("crush 5")
   return Do.BasicAttack(attack, target)
 end
 
