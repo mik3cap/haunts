@@ -181,10 +181,10 @@ func PlaySound(name string, volume float64) {
     return
   }
   sound, err := system.GetEvent(name, fmod.MODE_DEFAULT)
-  sound.SetVolume(volume)
   if err != nil {
     base.Error().Printf("Unable to get event '%s': %v", name, err)
     return
   }
+  sound.SetVolume(volume)
   sound.Start()
 }
