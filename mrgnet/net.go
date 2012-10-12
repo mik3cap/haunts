@@ -11,6 +11,7 @@ import (
   "math/big"
   "net/http"
   "net/url"
+  "time"
 )
 
 type NetId int64
@@ -157,6 +158,8 @@ type KillResponse struct {
 
 type Game struct {
   Name string
+
+  Created time.Time
 
   Denizens_name  string
   Denizens_id    NetId
