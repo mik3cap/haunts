@@ -1,0 +1,78 @@
+{
+  "Background": {
+    "Path": "ui/dialog/large.png"
+  },
+  "Title": {
+    "X": 0,
+    "Y": 0,
+    "Texture": {
+      "Path": ""
+    }
+  },
+  "Back": {
+    "X": 100,
+    "Y": 100,
+    "Texture": {
+      "Path": "ui/arrow_lf.png"
+    }
+  },
+  "Up": {
+    "X": 100,
+    "Y": 510,
+    "Texture": {
+      "Path": "ui/arrow_up.png"
+    }
+  },
+  "Down": {
+    "X": 100,
+    "Y": 200,
+    "Texture": {
+      "Path": "ui/arrow_down.png"
+    }
+  },
+  "Credits": {
+    "Size": 15,
+    "Scroll": {
+      "X": 200,
+      "Y": 75,
+      "Dx": 724,
+      "Dy": 593
+    },
+    "Lines": [
+      "1111 Fudgecake Bananaramaasdbfaksjdbfkjahsbdfkjahbsdfkjahbdfkjahbd",
+      "2222 Monkeys, Lemurs, and Rhinos",
+      "3333 Barack Obama",
+      "4444 Oarack Babamabanana",
+      "5 Fudgecake Bananarama",
+      "6Monkeys, Lemurs, and Rhinos",
+      "7Barack Obama",
+      "8Oarack Babamabanana",
+      "9Fudgecake Bananarama",
+      "8Monkeys, Lemurs, and Rhinos",
+      "7Barack Obama",
+      "6Oarack Babamabanana",
+      "5Fudgecake Bananarama",
+      "4Monkeys, Lemurs, and Rhinos",
+      "3Barack Obama",
+      "2Oarack Babamabanana",
+      "1Oarack Babamabanana",
+       "1111 Fudgecake Bananarama",
+      "2222 Monkeys, Lemurs, and Rhinos",
+      "3333 Barack Obama",
+      "4444 Oarack Babamabanana",
+      "5 Fudgecake Bananarama",
+      "6Monkeys, Lemurs, and Rhinos",
+      "7Barack Obama",
+      "8Oarack Babamabanana",
+      "9Fudgecake Bananarama",
+      "8Monkeys, Lemurs, and Rhinos",
+      "7Barack Obama",
+      "6Oarack Babamabanana",
+      "5Fudgecake Bananarama",
+      "4Monkeys, Lemurs, and Rhinos",
+      "3Barack Obama",
+      "2Oarack Babamabanana",
+      "1Oarack Babamabanana"
+    ]
+  }
+}

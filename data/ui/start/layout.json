@@ -8,18 +8,18 @@
     "Texture": {
       "Path": "ui/start/menu.png"
     },
-    "Continue": {
+    "Credits": {
       "X": 805,
-      "Y": 425,
+      "Y": 245,
       "Text": {
-        "String": "Continue",
+        "String": "Credits",
         "Size": 18,
         "Justification": "center"
       }
     },
     "Versus": {
       "X": 805,
-      "Y": 365,
+      "Y": 405,
       "Text": {
         "String": "Versus Mode",
         "Size": 18,
@@ -28,18 +28,9 @@
     },
     "Online": {
       "X": 805,
-      "Y": 305,
+      "Y": 325,
       "Text": {
         "String": "Play Online",
-        "Size": 18,
-        "Justification": "center"
-      }
-    },
-    "Settings": {
-      "X": 805,
-      "Y": 245,
-      "Text": {
-        "String": "Settings",
         "Size": 18,
         "Justification": "center"
       }

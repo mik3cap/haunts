@@ -13,7 +13,7 @@ type startLayout struct {
   Menu struct {
     X, Y     int
     Texture  texture.Object
-    Continue Button
+    Credits  Button
     Versus   Button
     Online   Button
     Settings Button
@@ -37,12 +37,19 @@ func InsertStartMenu(ui gui.WidgetParent) error {
     return err
   }
   sm.buttons = []ButtonLike{
-    &sm.layout.Menu.Continue,
+    &sm.layout.Menu.Credits,
     &sm.layout.Menu.Versus,
     &sm.layout.Menu.Online,
     &sm.layout.Menu.Settings,
   }
-  sm.layout.Menu.Continue.f = func(interface{}) {}
+  sm.layout.Menu.Credits.f = func(interface{}) {
+    ui.RemoveChild(&sm)
+    err := InsertCreditsMenu(ui)
+    if err != nil {
+      base.Error().Printf("Unable to make Credits Menu: %v", err)
+      return
+    }
+  }
   sm.layout.Menu.Versus.f = func(interface{}) {
     ui.RemoveChild(&sm)
     err := InsertMapChooser(
