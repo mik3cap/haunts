@@ -16,29 +16,57 @@ function DoTutorials()
   --It would be super cool.
 end
 
+function Side()
+  if Net.Active() then
+    return Net.Side()
+  end
+  return store.side
+end
+
+function OnStartup()
+  Script.PlayMusic("Haunts/Music/Adaptive/Bed 2")
+  if not store.tension then
+    store.tension = 0.0
+  end
+  Script.SetMusicParam("tension_level", store.tension)
+  if Net.Active() then
+    if Side() == "Denizens" then
+      Script.SetVisibility("denizens")
+    else
+      Script.SetVisibility("intruders")
+    end
+  end
+end
+
 function Init(data)
-  side_choices = Script.ChooserFromFile("ui/start/versus/side.json")
+  if Net.Active() then
+    -- The Init() function will only be run by the player starting the game who
+    -- is necessarily the Denizens player.
+    side_choices = {"Denizens"}
+  else
+    side_choices = Script.ChooserFromFile("ui/start/versus/side.json")
+  end
 
   -- check data.map == "random" or something else
   Script.LoadHouse("Lvl_04_Catacombs")
-  Script.PlayMusic("Haunts/Music/Adaptive/Bed 2")
-  Script.SetMusicParam("tension_level", 0.1)   
+  store.tension = 0.1
 
   store.side = side_choices[1]
-  if store.side == "Humans" then
+  if Side() == "Humans" or Net.Active() then
     Script.BindAi("denizen", "human")
     Script.BindAi("minions", "minions.lua")
     Script.BindAi("intruder", "human")
-  end
-  if store.side == "Denizens" then
-    Script.BindAi("denizen", "human")
-    Script.BindAi("minions", "minions.lua")
-    Script.BindAi("intruder", "intruders.lua")
-  end
-  if store.side == "Intruders" then
-    Script.BindAi("denizen", "denizens.lua")
-    Script.BindAi("minions", "minions.lua")
-    Script.BindAi("intruder", "human")
+  else
+    if Side() == "Denizens" then
+      Script.BindAi("denizen", "human")
+      Script.BindAi("minions", "minions.lua")
+      Script.BindAi("intruder", "intruders.lua")
+    end
+    if Side() == "Intruders" then
+      Script.BindAi("denizen", "denizens.lua")
+      Script.BindAi("minions", "minions.lua")
+      Script.BindAi("intruder", "human")
+    end
   end
 
   --spawn an initial beacon
@@ -94,50 +122,46 @@ function denizensSetup()
 end
 
 function RoundStart(intruders, round)
-  if not store.execs then
-    store.execs = {}
-  end
+  side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}
+
+  Script.SetLosMode("intruders", "entities")
+  Script.SetLosMode("denizens", "entities")
 
   if round == 1 then
     if intruders then
       intrudersSetup()     
     else
       Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Opening_Denizens.json")
-      Script.SetMusicParam("tension_level", 0.3)
+      store.tension = 0.3
+      Script.SetMusicParam("tension_level", store.tension)
       denizensSetup()
     end
-    Script.SetLosMode("intruders", "blind")
-    Script.SetLosMode("denizens", "blind")
 
     if IsStoryMode() then
       DoTutorials()
     end
 
-    store.game = Script.SaveGameState()
     Script.EndPlayerInteraction()
-
-    print("SCRIPT: End round 1")
+    store.game = nil
+    store.game = Script.SaveGameState()
+    if Net.Active() then
+      Net.UpdateState(store.game)
+    end
     return
   end
 
-  if intruders and round > 1 then
-    SetActivatedRooms()
+  if Net.Active() then
+    if Side() == "Denizens" then
+      denizensOnRound()
+    else
+      intrudersOnRound()
+    end
   end
 
-  if store.IntrudersPlacedBeaconLastTurn then
-    Script.SetVisibility("denizens")
-    setLosModeToRoomsWithSpawnsMatching("denizens", "Servitors_Start")
-    placed = Script.PlaceEntities("Servitors_Start", ServitorEnts, 0, ValueForReinforce())
-    Script.SetLosMode("intruders", "blind")
-    Script.SetLosMode("denizens", "blind")    
-  end
-
+  store.game = nil
   store.game = Script.SaveGameState()
-  side = {Intruder = intruders, Denizen = not intruders, Npc = false, Object = false}  
   SelectCharAtTurnStart(side)
-  if store.side == "Humans" then
-    Script.SetLosMode("intruders", "entities")
-    Script.SetLosMode("denizens", "entities")
+  if Side() == "Humans" then
     if intruders then
       Script.SetVisibility("intruders")
     else
@@ -145,21 +169,32 @@ function RoundStart(intruders, round)
     end
     Script.ShowMainBar(true)
   else
-    Script.ShowMainBar(intruders == (store.side == "Intruders"))
+    Script.ShowMainBar(intruders == (Side() == "Intruders"))
+  end
+
+  -- We run the *OnRound() functions here so that they can modify data in the
+  -- store and still have it saved to the game state that we upload to the
+  -- server.
+  store.game = nil
+  if Net.Active() then
+    store.game = Script.SaveGameState()
+    Net.UpdateState(store.game)
+  else
+    store.game = Script.SaveGameState()
   end
 end
 
 function SelectCharAtTurnStart(side)
   bDone = false
-  if LastIntruderEnt then
+  if store.LastIntruderEnt then
     if side.Intruder then
-      Script.SelectEnt(LastIntruderEnt)
+      Script.SelectEnt(store.LastIntruderEnt)
       bDone = true
     end
   end  
-  if LastDenizenEnt and not bDone then
+  if store.LastDenizenEnt and not bDone then
     if side.Denizen then   
-      Script.SelectEnt(LastDenizenEnt)
+      Script.SelectEnt(store.LastDenizenEnt)
       bDone = true
     end  
   end   
@@ -208,9 +243,8 @@ function BeaconCanSeePoint(pos)
   return false
 end
 
-function OnAction(intruders, round, exec)
-  -- Check for players being dead here
-  store.execs[table.getn(store.execs) + 1] = exec
+function checkExec(exec, is_playback)
+  SetActivatedRooms()
 
   if exec.Action.Name == "Place Beacon" then
     --An intruder placed a beacon
@@ -219,25 +253,22 @@ function OnAction(intruders, round, exec)
     IlluminateDenizens()
   end
 
-  if exec.Action.Name == "Hand Beacons" then
-    StoreGear("Beacons", exec.Target)
-    doGear(gear_exec)    
-    store.BeaconEnt = exec.Target
-    --remove the carrying beacons gear from the exec ent.    
-    StoreGear("", exec.Ent)
-    doGear(gear_exec)
-  end
+  -- if exec.Action.Name == "Hand Beacons" then
+  --   StoreGear("Beacons", exec.Target)
+  --   doGear(gear_exec)    
+  --   store.BeaconEnt = exec.Target
+  --   --remove the carrying beacons gear from the exec ent.    
+  --   -- StoreGear("", exec.Ent)
+  --   doGear(gear_exec)
+  -- end
 
   --The big check: Have the intruders won.
   if exec.Action.Name == "Place Beacon" then
-    SetActivatedRooms()
-
     if (store.Room1 or store.Room2 or store.Room3 or store.Room4 or store.Room5) and not store.bTalkedAboutBeaconInFirstRoom then
       store.bTalkedAboutBeaconInFirstRoom = true
       Script.SetMusicParam("tension_level", 0.4)  
       Script.DialogBox("ui/dialog/Lvl04/Lvl_04_First_Beacon_Intruders.json")
     end    
-
     if store.Room1 and store.Room2 and store.Room3 and store.Room4 and store.Room5 then
       --Intruders win
       Script.Sleep(2)
@@ -268,15 +299,25 @@ function OnAction(intruders, round, exec)
   end   
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them
-  if exec.Ent.ApCur == 0 then
-    nextEnt = GetEntityWithMostAP(exec.Ent.Side)
-    if nextEnt.ApCur > 0 then
-      if exec.Action.Type ~= "Move" then
-        Script.Sleep(2)
-      end      
-      Script.SelectEnt(nextEnt)
+  if not is_playback then
+    if exec.Ent.ApCur == 0 then
+      nextEnt = GetEntityWithMostAP(exec.Ent.Side)
+      if nextEnt.ApCur > 0 then
+        if exec.Action.Type ~= "Move" then
+          Script.Sleep(2)
+        end      
+        Script.SelectEnt(nextEnt)
+      end
     end
   end
+end
+
+function OnAction(intruders, round, exec)
+  if store.execs == nil then
+    store.execs = {}
+  end
+  store.execs[table.getn(store.execs) + 1] = exec
+  checkExec(exec, false)
 end
 
 function SetActivatedRooms()
@@ -344,14 +385,124 @@ function IlluminateDenizens()
   end
 end
 
+function DoPlayback(state, execs)
+  Script.LoadGameState(state)
+
+  --focus the camera on somebody on each team.
+  side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
+  Script.FocusPos(GetEntityWithMostAP(side2).Pos)
+
+  for _, exec in pairs(execs) do
+    bDone = false
+    if exec.script_spawn then
+      doSpawn(exec)
+      bDone = true
+    end
+    if exec.script_gear then
+      doGear(exec)
+      bDone = true
+    end
+    if exec.script_condition then
+      doCondition(exec)
+      bDone = true
+    end     
+    if exec.script_teleport then
+      doTeleport(exec)
+      bDone = true
+    end     
+    if exec.script_waypoint then
+      doWaypoint(exec)
+      bDone = true
+    end         
+    if not bDone then
+      Script.DoExec(exec)
+
+      --will be used at turn start to try to reselect the last thing they acted with.
+      if exec.Ent.Side == "intruders" then
+        store.LastIntruderEnt = exec.Ent
+      end 
+      if exec.Ent.Side == "denizens" then
+        store.LastDenizenEnt = exec.Ent
+      end 
+    end
+    if exec.Ent then
+      checkExec(exec, true)
+    end
+  end
+end
+
+function eitherOnRound()
+  --if the Duchess Orlac is dead, respawn her
+  ent = GetMasterEnt()
+  if ent then
+    if ent.HpCur <= 0 then
+      StoreSpawn(store.MasterName, Script.GetSpawnPointsMatching("Master_Start")[1].Pos)        
+    end
+  else
+    --no ent.  make one.
+    StoreSpawn(store.MasterName, Script.GetSpawnPointsMatching("Master_Start")[1].Pos)
+  end
+end
+
+function denizensOnRound()
+  SetActivatedRooms()
+  Script.DialogBox("ui/dialog/Lvl04/pass_to_denizens.json", {rooms=(5-store.nBeaconedRooms)})
+
+  if store.bTalkedAboutBeaconInFirstRoom and not store.bToldDenisAboutFirstBeacon then
+    store.bToldDenisAboutFirstBeacon = true
+    Script.DialogBox("ui/dialog/Lvl04/Lvl_04_First_Beacon_Denizens.json")
+  end
+
+  value = ValueForReinforce() 
+  if value > 0 and store.IntrudersPlacedBeaconLastTurn then
+    Script.SetVisibility("denizens")
+    setLosModeToRoomsWithSpawnsMatching("denizens", "Servitors_Start")
+    placed = Script.PlaceEntities("Servitors_Start", ServitorEnts, 0, value)
+    Script.SetLosMode("denizens", "entities")    
+  end
+
+  eitherOnRound()
+end
+
+function intrudersOnRound()
+  SetActivatedRooms()
+  store.IntrudersPlacedBeaconLastTurn = false
+
+  if not store.InitialPassToIntrudersDone then
+    store.InitialPassToIntrudersDone = true
+    Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders_initial.json")        
+  else
+    Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders.json", {rooms=(5-store.nBeaconedRooms)})
+  end
+
+  if not store.bDoneIntruderIntro then
+    store.bDoneIntruderIntro = true
+    Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Opening_Intruders.json")
+    Script.FocusPos(Script.GetSpawnPointsMatching("Intruders_Start")[1].Pos)
+  end
+
+  eitherOnRound()
+end
+
 function RoundEnd(intruders, round)
+  if Net.Active() then
+    Net.UpdateExecs(Script.SaveGameState(), store.execs)
+    Script.ShowMainBar(false)
+    Net.Wait()
+    -- cur = Script.SaveGameState()
+    state, execs = Net.LatestStateAndExecs()
+    DoPlayback(state, execs)
+    Script.ShowMainBar(true)
+    return
+  end
+
   if round == 1 then
     return
   end
 
   bSkipOtherChecks = false  --Resets this every round
 
-  if store.side == "Humans" then
+  if Side() == "Humans" then
     Script.ShowMainBar(false)
     Script.SetLosMode("intruders", "blind")
     Script.SetLosMode("denizens", "blind")
@@ -361,90 +512,21 @@ function RoundEnd(intruders, round)
       Script.SetVisibility("intruders")
     end
 
-    next_store = {}
     if intruders then
-      Script.DialogBox("ui/dialog/Lvl04/pass_to_denizens.json", {rooms=(5-store.nBeaconedRooms)})
-
-      if store.bTalkedAboutBeaconInFirstRoom and not store.bToldDenisAboutFirstBeacon then
-        next_store.bToldDenisAboutFirstBeacon = true
-        Script.DialogBox("ui/dialog/Lvl04/Lvl_04_First_Beacon_Denizens.json")
-      end
-
+      Script.DialogBox("ui/dialog/Lvl03/pass_to_denizens.json")
     else
-      next_store.IntrudersPlacedBeaconLastTurn = false
-
-      if not store.InitialPassToIntrudersDone then
-        next_store.InitialPassToIntrudersDone = true
-        Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders_initial.json")        
-      else
-        Script.DialogBox("ui/dialog/Lvl04/pass_to_intruders.json", {rooms=(5-store.nBeaconedRooms)})
-      end
-
-
-      if not store.bDoneIntruderIntro then
-        next_store.bDoneIntruderIntro = true
-        Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Opening_Intruders.json")
-        Script.FocusPos(Script.GetSpawnPointsMatching("Intruders_Start")[1].Pos)
-      end
+      Script.DialogBox("ui/dialog/Lvl03/pass_to_intruders.json")
     end
-
-    --if the Duchess Orlac is dead, respawn her
-    ent = GetMasterEnt()
-    if ent then
-      if ent.HpCur <= 0 then
-        StoreSpawn(store.MasterName, Script.GetSpawnPointsMatching("Master_Start")[1].Pos)        
-      end
-    else
-      --no ent.  make one.
-      StoreSpawn(store.MasterName, Script.GetSpawnPointsMatching("Master_Start")[1].Pos)
-    end 
 
     Script.SetLosMode("intruders", "entities")
     Script.SetLosMode("denizens", "entities")
-    execs = store.execs
-    Script.LoadGameState(store.game)
+    DoPlayback(store.game, store.execs)
 
-    --focus the camera on somebody on each team.
-    side2 = {Intruder = not intruders, Denizen = intruders, Npc = false, Object = false}  --reversed because it's still one side's turn when we're replaying their actions for the other side.
-    Script.FocusPos(GetEntityWithMostAP(side2).Pos)
-
-    for _, exec in pairs(execs) do
-      bDone = false
-      if exec.script_spawn then
-        doSpawn(exec)
-        bDone = true
-      end
-      if exec.script_gear then
-        doGear(exec)
-        bDone = true
-      end
-      if exec.script_condition then
-        doCondition(exec)
-        bDone = true
-      end     
-      if exec.script_teleport then
-        doTeleport(exec)
-        bDone = true
-      end     
-      if exec.script_waypoint then
-        doWaypoint(exec)
-        bDone = true
-      end         
-      if not bDone then
-        Script.DoExec(exec)
-
-        --will be used at turn start to try to reselect the last thing they acted with.
-        if exec.Ent.Side == "intruders" then
-          LastIntruderEnt = exec.Ent
-        end 
-        if exec.Ent.Side == "denizens" then
-          LastDenizenEnt = exec.Ent
-        end 
-      end
-    end
-    for key, value in pairs(next_store) do
-      store[key] = value
-    end
+    if intruders then
+      denizensOnRound()
+    else
+      intrudersOnRound()
+    end    
     store.execs = {}
   end
 end
@@ -480,7 +562,7 @@ end
 
 function StoreCondition(name, ent, addCondition)
   condition_exec = {script_condition=true, name=name, entity=ent, add=addCondition}
-  store.execs[table.getn(store.execs) + 1] = condition_exec
+  -- store.execs[table.getn(store.execs) + 1] = condition_exec
 end
 
 function doCondition(conditionExec)
@@ -568,13 +650,9 @@ function AnyIntrudersAlive()
 end
 
 function StoreWaypoint(wpname, wpside, wppos, wpradius, wpremove)
-  print("SCRIPT: 1")
   waypoint_exec = {script_waypoint=true, name=wpname, side=wpside, pos=wppos, radius=wpradius, remove=wpremove}
-  print("SCRIPT: 2")
-  store.execs[table.getn(store.execs) + 1] = waypoint_exec
-  print("SCRIPT: 3")
+  -- store.execs[table.getn(store.execs) + 1] = waypoint_exec
   doWaypoint(waypoint_exec)
-  print("SCRIPT: 4")
 end
 
 function doWaypoint(waypointExec)

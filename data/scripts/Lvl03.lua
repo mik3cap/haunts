@@ -182,22 +182,17 @@ function RoundStart(intruders, round)
     end
   end
 
-print("FLOOD: store.bFloodStarted: ", store.bFloodStarted)
   if store.bFloodStarted then
     --At the start of each denizen turn, we're going to randomly spawn attendants at 
     --the flood points.  Also need to prevent spawning within LoS of an intruder.
-print("FLOOD: doing flood")
     available_spawns = Script.GetSpawnPointsMatching("Flood_Point")
-print("FLOOD: available_spawns: ", table.getn(available_spawns))
     if TotalDeniCount() < 20 and intruders then
-      print("FLOOD: Spawning...")
       for i = 1, 3, 1 do
         --Pick an entity    
 
         --JONATHAN - The orderlies spawn at the start of the intruders turn and then move
         --on the next deni turn.  That's when the crash happens. 
         ent = Script.SpawnEntitySomewhereInSpawnPoints("Orderly", available_spawns, true)
-        print("FLOOD: Spawned")
         Script.SetAp(ent, 0)
       end
     end
@@ -238,7 +233,6 @@ print("FLOOD: available_spawns: ", table.getn(available_spawns))
   store.game = nil
   if Net.Active() then
     store.game = Script.SaveGameState()
-    print("Update State Round/Intruders: ", round, intruders)
     Net.UpdateState(store.game)
   else
     store.game = Script.SaveGameState()
@@ -330,7 +324,7 @@ function checkExec(exec, is_playback)
     StoreWaypoint("Waypoint1", "", "", "", true)
     StoreWaypoint("Waypoint2", "intruders", Script.GetSpawnPointsMatching("Waypoint2")[1].Pos, 3, false)  
 
-    StoreCondition("Carrying Antidote", exec.Ent, true)
+    -- StoreCondition("Carrying Antidote", exec.Ent, true)
     doCondition(condition_exec)
 
     StoreGear("Antidote", exec.Ent)
@@ -696,7 +690,7 @@ end
 
 function StoreWaypoint(wpname, wpside, wppos, wpradius, wpremove)
   waypoint_exec = {script_waypoint=true, name=wpname, side=wpside, pos=wppos, radius=wpradius, remove=wpremove}
-  store.execs[table.getn(store.execs) + 1] = waypoint_exec
+  -- store.execs[table.getn(store.execs) + 1] = waypoint_exec
   doWaypoint(waypoint_exec)
 end
 
