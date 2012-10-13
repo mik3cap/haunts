@@ -366,6 +366,7 @@ function checkExec(exec, is_playback)
           --The intruders got to the exit with the Antidote.  Game over.
           Script.Sleep(2)
           Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Victory_Intruders.json")    
+          Script.EndGame()
         end
       end
     end
@@ -384,6 +385,7 @@ function checkExec(exec, is_playback)
   if not AnyIntrudersAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl03/Lvl_03_Victory_Denizens.json")
+    Script.EndGame()
   end 
 
   --if the deni master used Signal Shift Change, permit spawning and end the turn.

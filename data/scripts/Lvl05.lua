@@ -284,6 +284,7 @@ function OnAction(intruders, round, exec)
       if exec.Target.HpCur <= 0 then
         Script.Sleep(2)
         Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Victory_Intruders.json")
+        Script.EndGame()
       end
     end
   end
@@ -291,6 +292,7 @@ function OnAction(intruders, round, exec)
   if not AnyIntrudersAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Victory_Denizens.json")
+    Script.EndGame()
   end
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them
@@ -345,6 +347,7 @@ function RoundEnd(intruders, round)
       Script.DialogBox("ui/dialog/Lvl05/pass_to_denizens.json")
       if store.nTurnsRemaining == 0 and store.bSummoning then
         Script.DialogBox("ui/dialog/Lvl05/Lvl_05_Victory_Denizens.json")
+        Script.EndGame()
       end
       if store.bMasterAttacked then
         next_store.bMasterAttacked = false --keep us from showing this more than once.

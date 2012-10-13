@@ -156,12 +156,14 @@ function OnAction(intruders, round, exec)
   if not AnyIntrudersAlive() and store.bIntruderIntroDone then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Denizens.json")
+    Script.EndGame()
   end
 
   --so does killing all the denizens
   if not AnyDenizensAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Intruders.json")
+    Script.EndGame()
   end  
 
 
@@ -227,6 +229,7 @@ function RoundEnd(intruders, round)
       next_store.OpCurrent = next_store.OpCurrent + next_store.occupiedPoints
       if next_store.OpCurrent >= next_store.OpGoal then
         Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Victory_Intruders.json")
+        Script.EndGame()
       else 
         Script.DialogBox("ui/dialog/Lvl10/Lvl_10_Score_Intruders.json", {points=next_store.occupiedPoints, countdown=(next_store.OpGoal - next_store.OpCurrent)})
       end

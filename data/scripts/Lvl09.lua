@@ -139,6 +139,7 @@ function OnAction(intruders, round, exec)
     --game over, the denizens win.
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl09/Lvl_09_Victory_Denizens.json")
+    Script.EndGame()
   end
 
   --so does killing all the denizens
@@ -146,6 +147,7 @@ function OnAction(intruders, round, exec)
     --game over, the denizens win.
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl09/Lvl_09_Victory_Intruders.json")
+    Script.EndGame()
   end  
 
   --if they just summoned, we need to find the thing they summoned, bind it's ai and kill it's ap.

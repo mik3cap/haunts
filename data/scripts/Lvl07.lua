@@ -220,6 +220,7 @@ function OnAction(intruders, round, exec)
         --The intruders got to the exit.  Game over.
         Script.Sleep(2)
         Script.DialogBox("ui/dialog/Lvl07/Lvl_07_Victory_Intruders.json")    
+        Script.EndGame()
       end
     end
   end  
@@ -228,6 +229,7 @@ function OnAction(intruders, round, exec)
   if not AnyIntrudersAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl07/Lvl_07_Victory_Denizens.json")
+    Script.EndGame()
   end 
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them

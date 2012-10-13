@@ -349,6 +349,7 @@ function checkExec(exec, is_playback)
       Script.DialogBox("ui/dialog/Lvl01/Victory_Intruders.json")
       store.tension = 0.7
       Script.SetMusicParam("tension_level", 0.7)
+      Script.EndGame()
     end   
   end
 
@@ -356,6 +357,7 @@ function checkExec(exec, is_playback)
   if not AnyIntrudersAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl01/Victory_Denizens.json")
+    Script.EndGame()
   end 
 
   -- --after any action, if this ent's Ap is 0, we can select the next ent for them

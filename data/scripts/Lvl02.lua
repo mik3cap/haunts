@@ -188,6 +188,7 @@ function OnAction(intruders, round, exec)
       --master is dead.  Intruders win.
       Script.Sleep(2)
       Script.DialogBox("ui/dialog/Lvl02/Lvl_02_Victory_Intruders.json")
+      Script.EndGame()
     end
   end
 
@@ -212,6 +213,7 @@ function OnAction(intruders, round, exec)
     --game over, the denizens win.
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl02/Lvl_02_Victory_Denizens.json")
+    Script.EndGame()
   end
 
   --after any action, if this ent's Ap is 0, we can select the next ent for them

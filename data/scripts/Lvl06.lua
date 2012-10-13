@@ -173,10 +173,12 @@ function OnAction(intruders, round, exec)
         if store.ScoreCounter >= 20 then
           Script.Sleep(2)
           Script.DialogBox("ui/dialog/Lvl06/Lvl_06_Victory_Intruders.json")
+          Script.EndGame()
         end
         if store.ScoreCounter <= 0 then
           Script.Sleep(2)
           Script.DialogBox("ui/dialog/Lvl06/Lvl_06_Victory_Denizens.json")
+          Script.EndGame()
         end
       end
     end

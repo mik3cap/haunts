@@ -273,6 +273,7 @@ function checkExec(exec, is_playback)
       --Intruders win
       Script.Sleep(2)
       Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Victory_Intruders.json")
+      Script.EndGame()
     end 
   end
 
@@ -280,6 +281,7 @@ function checkExec(exec, is_playback)
   if not AnyIntrudersAlive() then
     Script.Sleep(2)
     Script.DialogBox("ui/dialog/Lvl04/Lvl_04_Victory_Denizens.json")
+    Script.EndGame()
   end 
 
 
