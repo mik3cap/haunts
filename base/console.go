@@ -1,10 +1,10 @@
 package base
 
 import (
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gui"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gui"
   "bufio"
-  "github.com/runningwild/opengl/gl"
+  "github.com/mik3cap/opengl/gl"
   "strings"
   "unicode"
 )

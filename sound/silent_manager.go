@@ -5,8 +5,8 @@
 package sound
 
 import (
-  "github.com/runningwild/glop/sprite"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/glop/sprite"
+  "github.com/mik3cap/haunts/base"
 )
 
 func Init()                                 {}

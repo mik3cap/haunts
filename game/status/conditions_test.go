@@ -6,8 +6,8 @@ import (
   "path/filepath"
   "github.com/orfjackal/gospec/src/gospec"
   . "github.com/orfjackal/gospec/src/gospec"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/game/status"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/game/status"
 )
 
 var datadir string

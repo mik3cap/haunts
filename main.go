@@ -9,23 +9,23 @@ import (
   "runtime/pprof"
   "math/rand"
   gl "github.com/chsc/gogl/gl21"
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gos"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/memory"
-  "github.com/runningwild/glop/render"
-  "github.com/runningwild/glop/system"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/game"
-  "github.com/runningwild/haunts/sound"
-  "github.com/runningwild/haunts/house"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gos"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/memory"
+  "github.com/mik3cap/glop/render"
+  "github.com/mik3cap/glop/system"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/game"
+  "github.com/mik3cap/haunts/sound"
+  "github.com/mik3cap/haunts/house"
 
   // Need to pull in all of the actions we define here and not in
   // haunts/game because haunts/game/actions depends on it
-  _ "github.com/runningwild/haunts/game/actions"
-  _ "github.com/runningwild/haunts/game/ai"
+  _ "github.com/mik3cap/haunts/game/actions"
+  _ "github.com/mik3cap/haunts/game/ai"
 
-  "github.com/runningwild/haunts/game/status"
+  "github.com/mik3cap/haunts/game/status"
 )
 
 var (

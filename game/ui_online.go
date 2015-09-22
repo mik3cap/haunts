@@ -2,13 +2,13 @@ package game
 
 import (
   "fmt"
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/glop/util/algorithm"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/mrgnet"
-  "github.com/runningwild/haunts/texture"
-  "github.com/runningwild/opengl/gl"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/glop/util/algorithm"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/mrgnet"
+  "github.com/mik3cap/haunts/texture"
+  "github.com/mik3cap/opengl/gl"
   "path/filepath"
   "time"
 )

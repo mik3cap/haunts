@@ -3,7 +3,7 @@ package status
 import (
   "encoding/gob"
   "path/filepath"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/haunts/base"
 )
 
 // Conditions represent instantaneous or ongoing Conditions on an entity.

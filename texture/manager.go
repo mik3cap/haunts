@@ -1,12 +1,12 @@
 package texture
 
 import (
-  "github.com/runningwild/glop/render"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/mathgl"
-  "github.com/runningwild/memory"
-  "github.com/runningwild/opengl/gl"
-  "github.com/runningwild/opengl/glu"
+  "github.com/mik3cap/glop/render"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/mathgl"
+  "github.com/mik3cap/memory"
+  "github.com/mik3cap/opengl/gl"
+  "github.com/mik3cap/opengl/glu"
   "image"
   "image/draw"
   _ "image/jpeg"

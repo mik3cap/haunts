@@ -2,8 +2,8 @@ package game
 
 import (
   gl "github.com/chsc/gogl/gl21"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/haunts/base"
   "time"
 )
 

@@ -1,7 +1,7 @@
 package game
 
 import (
-  "github.com/runningwild/glop/gui"
+  "github.com/mik3cap/glop/gui"
 )
 
 // SUPER simple scrolling region

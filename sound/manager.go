@@ -4,8 +4,8 @@
 package sound
 
 import (
-  fmod "github.com/runningwild/fmod/event"
-  "github.com/runningwild/haunts/base"
+  fmod "github.com/mik3cap/fmod/event"
+  "github.com/mik3cap/haunts/base"
   "math"
   "path/filepath"
   "time"

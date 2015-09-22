@@ -10,7 +10,7 @@ import (
   "bytes"
   "hash/fnv"
   "path/filepath"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/haunts/base"
   "encoding/gob"
   lua "github.com/xenith-studios/golua"
 )

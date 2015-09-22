@@ -2,9 +2,9 @@ package house
 
 import (
   gl "github.com/chsc/gogl/gl21"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/texture"
-  "github.com/runningwild/mathgl"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/texture"
+  "github.com/mik3cap/mathgl"
 )
 
 func MakeFurniture(name string) *Furniture {

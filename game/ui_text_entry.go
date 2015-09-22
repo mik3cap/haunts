@@ -1,10 +1,10 @@
 package game
 
 import (
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/opengl/gl"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/opengl/gl"
 )
 
 var valid_keys map[byte]bool

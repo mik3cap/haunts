@@ -2,9 +2,9 @@ package house
 
 import (
   "sort"
-  "github.com/runningwild/GoLLRB/llrb"
-  "github.com/runningwild/glop/util/algorithm"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/GoLLRB/llrb"
+  "github.com/mik3cap/glop/util/algorithm"
+  "github.com/mik3cap/haunts/base"
 )
 
 type endpoint struct {

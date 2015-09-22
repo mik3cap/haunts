@@ -1,8 +1,8 @@
 package main
 
 import (
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/glop/gin"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/glop/gin"
 )
 
 type SaveWidget struct {

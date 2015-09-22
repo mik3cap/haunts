@@ -2,10 +2,10 @@ package house
 
 import (
   "image"
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/glop/util/algorithm"
-  "github.com/runningwild/haunts/base"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/glop/util/algorithm"
+  "github.com/mik3cap/haunts/base"
 )
 
 type FurniturePanel struct {

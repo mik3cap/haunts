@@ -2,8 +2,8 @@ package house
 
 import (
   "runtime"
-  "github.com/runningwild/glop/render"
-  "github.com/runningwild/opengl/gl"
+  "github.com/mik3cap/glop/render"
+  "github.com/mik3cap/opengl/gl"
 )
 
 const LosMinVisibility = 32

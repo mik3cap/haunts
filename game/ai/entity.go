@@ -2,11 +2,11 @@ package ai
 
 import (
   "fmt"
-  "github.com/runningwild/glop/util/algorithm"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/game"
-  "github.com/runningwild/haunts/game/actions"
-  "github.com/runningwild/haunts/house"
+  "github.com/mik3cap/glop/util/algorithm"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/game"
+  "github.com/mik3cap/haunts/game/actions"
+  "github.com/mik3cap/haunts/house"
   lua "github.com/xenith-studios/golua"
   "sort"
 )

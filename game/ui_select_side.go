@@ -1,10 +1,10 @@
 package game
 
 // import (
-//   "github.com/runningwild/glop/gin"
-//   "github.com/runningwild/glop/gui"
-//   "github.com/runningwild/haunts/house"
-//   "github.com/runningwild/haunts/base"
+//   "github.com/mik3cap/glop/gin"
+//   "github.com/mik3cap/glop/gui"
+//   "github.com/mik3cap/haunts/house"
+//   "github.com/mik3cap/haunts/base"
 //   "path/filepath"
 // )
 

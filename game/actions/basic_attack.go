@@ -2,14 +2,14 @@ package actions
 
 import (
   "encoding/gob"
-  "github.com/runningwild/glop/gin"
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/glop/sprite"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/game"
-  "github.com/runningwild/haunts/game/status"
-  "github.com/runningwild/haunts/texture"
-  "github.com/runningwild/opengl/gl"
+  "github.com/mik3cap/glop/gin"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/glop/sprite"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/game"
+  "github.com/mik3cap/haunts/game/status"
+  "github.com/mik3cap/haunts/texture"
+  "github.com/mik3cap/opengl/gl"
   lua "github.com/xenith-studios/golua"
   "path/filepath"
 )

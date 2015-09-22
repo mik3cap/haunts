@@ -1,11 +1,11 @@
 package game
 
 import (
-  "github.com/runningwild/glop/gui"
-  "github.com/runningwild/haunts/house"
-  "github.com/runningwild/haunts/game/hui"
-  "github.com/runningwild/haunts/base"
-  "github.com/runningwild/haunts/texture"
+  "github.com/mik3cap/glop/gui"
+  "github.com/mik3cap/haunts/house"
+  "github.com/mik3cap/haunts/game/hui"
+  "github.com/mik3cap/haunts/base"
+  "github.com/mik3cap/haunts/texture"
   gl "github.com/chsc/gogl/gl21"
   "path/filepath"
 )
